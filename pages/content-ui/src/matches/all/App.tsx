@@ -46,7 +46,7 @@ export default function App() {
 
   return (
     <div
-      className="pointer-events-none absolute border-2 border-blue-500 bg-blue-500/10"
+      className="pointer-events-none absolute border border-blue-500 bg-blue-500/10"
       style={{
         zIndex: 2147483647,
         ...highlighterStyle,
