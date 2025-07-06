@@ -3,6 +3,16 @@ import type { ReactElement } from 'react';
 
 export const initAppWithShadow = ({ id, app, inlineCss }: { id: string; inlineCss: string; app: ReactElement }) => {
   const root = document.createElement('div');
+
+  // 确保应用在页面最上层
+  root.style.position = 'fixed';
+  root.style.bottom = '0';
+  root.style.left = '0';
+  root.style.right = '0';
+  root.style.top = '0';
+  root.style.zIndex = '1000000';
+  root.style.pointerEvents = 'none';
+
   root.id = id;
 
   document.body.append(root);
