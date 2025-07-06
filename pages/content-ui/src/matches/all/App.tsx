@@ -78,7 +78,9 @@ export default function App() {
           style={{
             zIndex: 2147483647,
             left: highlighterStyle.left,
-            top: `calc(${highlighterStyle.top} - 2.5rem)`,
+            top: `calc(${highlighterStyle.top} - ${highlighterStyle.height})`,
+            width: highlighterStyle.width,
+            height: highlighterStyle.height,
           }}>
           {text}
         </div>
