@@ -25,6 +25,7 @@ const handleMouseOver = (event: MouseEvent) => {
               width: rect.width,
               height: rect.height,
             },
+            text,
           },
         }),
       );
