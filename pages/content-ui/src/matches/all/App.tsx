@@ -11,10 +11,16 @@ interface HighlighterStyle {
 
 const port = 52345;
 
-const query = async () => {
+const query = async (textToTranslate: string) => {
   const startTimeInMS = Date.now();
   const url = `http://localhost:${port}`;
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text: textToTranslate }),
+  });
   const data = await res.json();
   const endTimeInMS = Date.now();
   console.log(`${endTimeInMS - startTimeInMS}ms`);
@@ -31,6 +37,7 @@ export default function App() {
   });
   const [text, setText] = useState('');
   const [showText, setShowText] = useState(false);
+  const [isRightShiftPressed, setIsRightShiftPressed] = useState(false);
 
   useEffect(() => {
     const handleShowHighlighter = (event: CustomEvent) => {
@@ -52,12 +59,14 @@ export default function App() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Shift' && event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT) {
         setShowText(true);
+        setIsRightShiftPressed(true);
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === 'Shift') {
         setShowText(false);
+        setIsRightShiftPressed(false);
       }
     };
 
@@ -76,11 +85,13 @@ export default function App() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   useEffect(() => {
-    const timer = setInterval(async () => {
-      await query();
-    }, 100);
-    return () => clearInterval(timer);
-  }, []);
+    if (isRightShiftPressed && text) {
+      const timer = setInterval(async () => {
+        await query(text);
+      }, 100);
+      return () => clearInterval(timer);
+    }
+  }, [isRightShiftPressed, text]);
 
   const left = highlighterStyle.left;
   const top = highlighterStyle.top;
