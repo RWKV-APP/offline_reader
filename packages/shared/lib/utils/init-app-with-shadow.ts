@@ -10,7 +10,7 @@ export const initAppWithShadow = ({ id, app, inlineCss }: { id: string; inlineCs
   root.style.left = '0';
   root.style.right = '0';
   root.style.top = '0';
-  root.style.zIndex = '1000000';
+  root.style.zIndex = '2147483647';
   root.style.pointerEvents = 'none';
 
   root.id = id;

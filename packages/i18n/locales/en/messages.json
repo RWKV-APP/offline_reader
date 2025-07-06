@@ -10,6 +10,9 @@
   "toggleTheme": {
     "message": "Toggle theme"
   },
+  "syncState": {
+    "message": "Sync State"
+  },
   "injectButton": {
     "message": "Click to inject Content Scripts"
   },
