@@ -1,5 +1,3 @@
-import { t } from '@extension/i18n';
-import { ToggleButton } from '@extension/ui';
 import { useEffect, useState } from 'react';
 
 // Define the shape of the highlighter's style state
@@ -47,27 +45,12 @@ export default function App() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <>
-      {/* Highlighter Element */}
-      <div
-        style={{
-          position: 'absolute',
-          backgroundColor: 'rgba(100, 181, 246, 0.3)',
-          border: '2px solid #2196F3',
-          borderRadius: '3px',
-          pointerEvents: 'none',
-          zIndex: 2147483647,
-          ...highlighterStyle,
-        }}
-      />
-
-      {/* Original UI */}
-      <div className="pointer-events-auto flex items-center justify-between gap-2 rounded bg-white/50 px-2 py-1 backdrop-blur-sm">
-        <div className="flex gap-1 text-sm text-blue-500">
-          Edit <strong className="text-blue-700">pages/content-ui/src/matches/all/App.tsx</strong> and save to reload.
-        </div>
-        <ToggleButton className="mt-0 bg-white/50">{t('syncState')}</ToggleButton>
-      </div>
-    </>
+    <div
+      className="pointer-events-none absolute border-2 border-blue-500 bg-blue-500/10"
+      style={{
+        zIndex: 2147483647,
+        ...highlighterStyle,
+      }}
+    />
   );
 }

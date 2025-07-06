@@ -9,21 +9,19 @@ const handleMouseOver = (event: MouseEvent) => {
 
   if (target && target.innerText) {
     const text = target.innerText.trim();
-    const position = {
-      x: event.clientX,
-      y: event.clientY,
-    };
 
     if (text) {
-      console.log('[pages/content/src/matches/all/index.ts:18:handleMouseOver]', text, position);
+      console.log('handleMouseOver');
+      console.log(text);
       const rect = target.getBoundingClientRect();
+      console.log(rect);
       // Dispatch a custom event with the element's position and size
       document.dispatchEvent(
         new CustomEvent('ceb-show-highlighter', {
           detail: {
             rect: {
-              left: rect.left + window.scrollX,
-              top: rect.top + window.scrollY,
+              left: rect.left,
+              top: rect.top,
               width: rect.width,
               height: rect.height,
             },
