@@ -3,19 +3,19 @@ import { useEffect, useState } from 'react';
 // Define the shape of the highlighter's style state
 interface HighlighterStyle {
   display: 'none' | 'block';
-  left: string;
-  top: string;
-  width: string;
-  height: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
     display: 'none',
-    left: '0px',
-    top: '0px',
-    width: '0px',
-    height: '0px',
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
   });
   const [text, setText] = useState('');
   const [showText, setShowText] = useState(false);
@@ -25,10 +25,10 @@ export default function App() {
       const { rect, text: newText } = event.detail;
       setHighlighterStyle({
         display: 'block',
-        left: `${rect.left}px`,
-        top: `${rect.top}px`,
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
       });
       setText(newText);
     };
@@ -63,6 +63,15 @@ export default function App() {
     };
   }, []); // Empty dependency array ensures this runs only once on mount
 
+  const left = highlighterStyle.left;
+  const top = highlighterStyle.top;
+  const windowHeight = window.innerHeight;
+  const bottom = windowHeight - top;
+  const width = highlighterStyle.width;
+  const padding = 8;
+
+  // TODO: 顶部溢出
+
   return (
     <>
       <div
@@ -74,13 +83,17 @@ export default function App() {
       />
       {showText && (
         <div
-          className="pointer-events-none absolute rounded bg-black p-1 text-white"
+          className="pointer-events-none absolute flex items-end p-1 text-white"
           style={{
+            backdropFilter: `blur(${padding}px)`,
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
             zIndex: 2147483647,
-            left: highlighterStyle.left,
-            top: `calc(${highlighterStyle.top} - ${highlighterStyle.height})`,
-            width: highlighterStyle.width,
-            height: highlighterStyle.height,
+            left: left - padding,
+            bottom,
+            width: width + padding * 2,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
           }}>
           {text}
         </div>
