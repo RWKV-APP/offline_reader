@@ -7,6 +7,10 @@
 ## Code Style
 
 - 必须遵守 eslint.config.ts 中的要求
-- 当构建 func 时, 必须使用 expression 而非 declaration. 
-- 尽量不要在 index.tsx 中绘制 UI. 如果可能的话, 尽量在 App.tsx 中绘制 UI.
+- 当构建 func 时, 必须使用 expression 而非 declaration
+- 尽量不要在 index.tsx 中绘制 UI. 如果可能的话, 尽量在 App.tsx 中绘制 UI
 
+
+## workflow
+
+- 你编写完代码后, 不用运行 pnpm build, 因为我已经运行 pnpm dev 了
