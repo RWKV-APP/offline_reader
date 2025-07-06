@@ -9,6 +9,18 @@ interface HighlighterStyle {
   height: number;
 }
 
+const port = 52345;
+
+const query = async () => {
+  const startTimeInMS = Date.now();
+  const url = `http://localhost:${port}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  const endTimeInMS = Date.now();
+  console.log(`${endTimeInMS - startTimeInMS}ms`);
+  return data;
+};
+
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
     display: 'none',
@@ -62,6 +74,13 @@ export default function App() {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []); // Empty dependency array ensures this runs only once on mount
+
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      await query();
+    }, 100);
+    return () => clearInterval(timer);
+  }, []);
 
   const left = highlighterStyle.left;
   const top = highlighterStyle.top;
