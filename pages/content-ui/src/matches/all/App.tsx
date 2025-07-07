@@ -14,13 +14,17 @@ const port = 52345;
 const formatTranslation = (translation: string) => {
   // 去掉 `[12]` 这种形式
   const regex = /\[(\d+)\]/g;
-  return translation.replace(regex, '');
+  // 去掉 `[citation needed]`
+  const regex2 = /\[citation needed\]/g;
+  return translation.replace(regex, '').replace(regex2, '').trim();
 };
 
 const formatText = (text: string) => {
   // 去掉 `[12]` 这种形式
   const regex = /\[(\d+)\]/g;
-  return text.replace(regex, '');
+  // 去掉 `[citation needed]`
+  const regex2 = /\[citation needed\]/g;
+  return text.replace(regex, '').replace(regex2, '').trim();
 };
 
 const query = async (textToTranslate: string) => {
@@ -48,6 +52,7 @@ export default function App() {
   const [translation, setTranslation] = useState('');
   const [showText, setShowText] = useState(false);
   const [isRightShiftPressed, setIsRightShiftPressed] = useState(false);
+  const [isLeftShiftPressed, setIsLeftShiftPressed] = useState(false);
 
   useEffect(() => {
     const handleShowHighlighter = (event: CustomEvent) => {
@@ -67,16 +72,25 @@ export default function App() {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Shift' && event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT) {
-        setShowText(true);
-        setIsRightShiftPressed(true);
+      if (event.repeat) return;
+      if (event.key === 'Shift') {
+        if (event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT) {
+          setShowText(true);
+          setIsRightShiftPressed(true);
+        } else if (event.location === KeyboardEvent.DOM_KEY_LOCATION_LEFT) {
+          setIsLeftShiftPressed(true);
+        }
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
       if (event.key === 'Shift') {
-        setShowText(false);
-        setIsRightShiftPressed(false);
+        if (event.location === KeyboardEvent.DOM_KEY_LOCATION_RIGHT) {
+          setShowText(false);
+          setIsRightShiftPressed(false);
+        } else if (event.location === KeyboardEvent.DOM_KEY_LOCATION_LEFT) {
+          setIsLeftShiftPressed(false);
+        }
       }
     };
 
@@ -93,6 +107,12 @@ export default function App() {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, []); // Empty dependency array ensures this runs only once on mount
+
+  useEffect(() => {
+    if (isRightShiftPressed && isLeftShiftPressed && text && translation) {
+      navigator.clipboard.writeText(`${formatText(text)}\n\n${translation}`);
+    }
+  }, [isRightShiftPressed, isLeftShiftPressed, text, translation]);
 
   useEffect(() => {
     if (isRightShiftPressed && text) {
