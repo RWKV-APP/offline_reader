@@ -11,8 +11,19 @@ interface HighlighterStyle {
 
 const port = 52345;
 
+const formatTranslation = (translation: string) => {
+  // 去掉 `[12]` 这种形式
+  const regex = /\[(\d+)\]/g;
+  return translation.replace(regex, '');
+};
+
+const formatText = (text: string) => {
+  // 去掉 `[12]` 这种形式
+  const regex = /\[(\d+)\]/g;
+  return text.replace(regex, '');
+};
+
 const query = async (textToTranslate: string) => {
-  const startTimeInMS = Date.now();
   const url = `http://localhost:${port}`;
   const res = await fetch(url, {
     method: 'POST',
@@ -22,8 +33,6 @@ const query = async (textToTranslate: string) => {
     body: JSON.stringify({ text: textToTranslate }),
   });
   const data = await res.json();
-  const endTimeInMS = Date.now();
-  console.log(`${endTimeInMS - startTimeInMS}ms`);
   return data;
 };
 
@@ -88,9 +97,9 @@ export default function App() {
   useEffect(() => {
     if (isRightShiftPressed && text) {
       const timer = setInterval(async () => {
-        const data = await query(text);
+        const data = await query(formatText(text));
         const { translation } = data;
-        setTranslation(translation);
+        setTranslation(formatTranslation(translation));
       }, 100);
       return () => clearInterval(timer);
     }
