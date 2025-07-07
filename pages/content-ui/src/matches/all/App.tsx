@@ -36,6 +36,7 @@ export default function App() {
     height: 0,
   });
   const [text, setText] = useState('');
+  const [translation, setTranslation] = useState('');
   const [showText, setShowText] = useState(false);
   const [isRightShiftPressed, setIsRightShiftPressed] = useState(false);
 
@@ -87,11 +88,20 @@ export default function App() {
   useEffect(() => {
     if (isRightShiftPressed && text) {
       const timer = setInterval(async () => {
-        await query(text);
+        const data = await query(text);
+        const { translation } = data;
+        setTranslation(translation);
       }, 100);
       return () => clearInterval(timer);
     }
+    return () => {};
   }, [isRightShiftPressed, text]);
+
+  useEffect(() => {
+    if (!isRightShiftPressed) {
+      setTranslation('');
+    }
+  }, [isRightShiftPressed]);
 
   const left = highlighterStyle.left;
   const top = highlighterStyle.top;
@@ -125,7 +135,7 @@ export default function App() {
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             border: '1px solid rgba(255, 255, 255, 0.5)',
           }}>
-          {text}
+          {translation}
         </div>
       )}
     </>
