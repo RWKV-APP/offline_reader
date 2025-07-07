@@ -24,11 +24,15 @@ const formatTranslation = (translation: string) => {
 };
 
 const formatText = (text: string) => {
-  // 去掉 `[12]` 这种形式
-  const regex = /\[(\d+)\]/g;
-  // 去掉 `[citation needed]`
-  const regex2 = /\[citation needed\]/g;
-  return text.replace(regex, '').replace(regex2, '').trim();
+  // 统一处理所有方括号引用格式：
+  // - [12] 单个数字
+  // - [1,2,3] 多个数字（无空格）
+  // - [1, 2, 3] 多个数字（有空格）
+  // - [citation needed] 引用需要
+  // - [1-5] 数字范围
+  // - [1, 2, 3; 4, 5] 复杂组合
+  const citationRegex = /\[[^\]]*\]/g;
+  return text.replace(citationRegex, '').trim();
 };
 
 const query = async (textToTranslate: string) => {
@@ -121,7 +125,13 @@ export default function App() {
   useEffect(() => {
     if (isRightShiftPressed && text) {
       const timer = setInterval(async () => {
-        const data = await query(formatText(text));
+        const sourceText = formatText(text);
+        // TODO: 通常, 这种情况发生在, 截获了大量 innerText 时
+        if (sourceText.length > 3000) {
+          console.log('sourceText.length > 3000', sourceText.length);
+          return;
+        }
+        const data = await query(sourceText);
         const { translation } = data;
         setTranslation(formatTranslation(translation));
       }, 50);
@@ -148,7 +158,7 @@ export default function App() {
   return (
     <>
       <div
-        className="pointer-events-none absolute border border-blue-500 bg-blue-500/10"
+        className="pointer-events-none absolute border border-blue-500"
         style={{
           zIndex: 2147483647,
           ...highlighterStyle,

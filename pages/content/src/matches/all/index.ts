@@ -53,13 +53,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
     // Prevent any default browser action if needed, though Shift alone usually has none.
     // event.preventDefault();
 
-    console.log('Right Shift pressed. Dispatching event to show floating window.');
     document.dispatchEvent(new CustomEvent('ceb-show-floating-window'));
   }
 };
 
 const handleKeyUp = (event: KeyboardEvent) => {
-  console.log('Key up');
   if (event.code === 'ShiftRight') {
     document.dispatchEvent(new CustomEvent('ceb-hide-floating-window'));
   }
