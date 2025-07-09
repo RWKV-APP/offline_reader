@@ -74,12 +74,21 @@ const initializeKeyListeners = () => {
 // Initialize the key listener
 initializeKeyListeners();
 
-const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head'];
+const debuggingType: string[] = [];
+const debuggingTypeUpper = debuggingType.map(item => item.toUpperCase());
+const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'html'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 
 const handleNode = (_node: Node) => {
   const node = _node as HTMLElement;
   const nodeName = node.nodeName;
+
+  const containsDebuggingType = debuggingType.length > 0;
+  if (containsDebuggingType) {
+    if (!debuggingTypeUpper.includes(nodeName) && !debuggingType.includes(nodeName)) {
+      return;
+    }
+  }
 
   // 过滤掉不需要处理的节点
   if (ignoreTypeUpper.includes(nodeName) || ignoreTypeLower.includes(nodeName)) {
@@ -112,14 +121,21 @@ const handleNode = (_node: Node) => {
     return;
   }
 
+  const parentNode = node.parentElement;
+  if (parentNode && parentNode.hasAttribute('rwkv-offline-target')) {
+    return;
+  }
+
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
   const childNodesLength = childNodes.length;
+  const childNodesNames = childNodes.map(item => item.nodeName);
   let nonTextChildNodesTextContent = '';
-
+  let notEmptyTextChildNodesCount = 0;
   for (const childNode of childNodes) {
     const childNodeName = childNode.nodeName;
+    const isTextChildNode = childNodeName === '#text';
 
-    if (childNodeName !== '#text') {
+    if (!isTextChildNode) {
       const childNodeTextContent = childNode.textContent?.trim();
       // 如果非 #text 子节点承载了全部的内容, 则不处理
       nonTextChildNodesTextContent += childNodeTextContent;
@@ -127,6 +143,30 @@ const handleNode = (_node: Node) => {
         return;
       }
     }
+
+    if (isTextChildNode) {
+      const textChildNodeTextContent = childNode.textContent?.trim();
+      const hasText = textChildNodeTextContent && textChildNodeTextContent.length > 0;
+
+      // if (childNodesLength == 7 && node.attributes.getNamedItem('icon')?.value === 'repo-forked') {
+      //   console.log({ textChildNodeTextContent });
+      // }
+
+      if (hasText) {
+        notEmptyTextChildNodesCount++;
+      }
+    }
+  }
+
+  if (notEmptyTextChildNodesCount <= 0) {
+    // if (childNodesLength == 7 && node.attributes.getNamedItem('icon')?.value === 'repo-forked') {
+    //   console.log(node);
+    //   console.log(childNodesNames);
+    //   console.log(node.childNodes);
+    //   console.log(childNodes.map(item => item.textContent?.trim()));
+    //   console.log('notEmptyTextChildNodesCount <= 0');
+    // }
+    return;
   }
 
   if (childNodesLength == 1) {
@@ -138,11 +178,19 @@ const handleNode = (_node: Node) => {
   }
 
   // DEBUG 时标记
-  (node as HTMLElement).style.outline = '2px solid rgba(0, 0, 0, 0.1)';
+  node.style.outline = '1px solid rgba(255, 0, 0, 0.2)';
+  node.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+
+  node.setAttribute('rwkv-offline-target', 'true');
 
   // DEBUG 时打印
-  console.log(node);
-  console.log(textContent);
+  console.log({
+    textContent,
+    node,
+    childNodesLength,
+    childNodesNames,
+    textChildNodesCount: notEmptyTextChildNodesCount,
+  });
 };
 
 const observer = new MutationObserver(mutationsList => {
