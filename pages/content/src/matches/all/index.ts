@@ -4,6 +4,64 @@ console.log('[CEB] All content script loaded');
 
 void sampleFunction();
 
+const query = async (textToTranslate: string) => {
+  const startTimestampInMs = Date.now();
+  const model = 'Qwen/Qwen3-8B';
+  const enable_thinking = false;
+  const apiKey = '???';
+  const url = window.location.href;
+
+  try {
+    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        enable_thinking,
+        messages: [
+          {
+            role: 'system',
+            content: `
+你是一个专业的翻译, 将用户输入的文本翻译为中文
+不要包含任何翻译语言之外的内容
+中英文之间一定要加上空格, 用户访问的 url 是: ${url}
+`,
+          },
+          {
+            role: 'user',
+            content: textToTranslate,
+          },
+        ],
+      }),
+    });
+
+    const endTimestampInMs = Date.now();
+    const durationInMs = endTimestampInMs - startTimestampInMs;
+    console.log(`Translation completed in ${durationInMs}ms`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const responseData = await response.json();
+    console.log(responseData);
+
+    const { choices } = responseData;
+    if (choices && choices.length > 0) {
+      const { message } = choices[0];
+      const { content } = message;
+      console.log(content);
+      return content;
+    }
+  } catch (error) {
+    console.error('Translation error:', error);
+    return '';
+  }
+};
+
 const handleMouseOver = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
 
@@ -178,6 +236,10 @@ const handleNode = (_node: Node) => {
     return;
   }
 
+  if (node.hasAttribute('translation-done')) {
+    return;
+  }
+
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
   const childNodesLength = childNodes.length;
   const childNodesNames = childNodes.map(item => item.nodeName);
@@ -233,12 +295,16 @@ const handleNode = (_node: Node) => {
   }
 
   const parentElement = document.createElement(parentElementName);
+
   let inner = breakLineHappened ? '' : ' ';
-  for (let i = 0; i < textContent.length / 6; i++) {
-    inner += '哈';
-  }
-  parentElement.textContent = inner;
-  node.appendChild(parentElement);
+  query(textContent).then(translation => {
+    if (translation) {
+      inner = translation;
+      parentElement.textContent = inner;
+      node.appendChild(parentElement);
+      node.setAttribute('translation-done', 'true');
+    }
+  });
 
   // DEBUG 时打印
   console.log({
