@@ -157,13 +157,15 @@ export default function App() {
 
   return (
     <>
-      <div
-        className="pointer-events-none absolute border border-blue-500"
-        style={{
-          zIndex: 2147483647,
-          ...highlighterStyle,
-        }}
-      />
+      {showText && (
+        <div
+          className="pointer-events-none absolute border border-blue-500"
+          style={{
+            zIndex: 2147483647,
+            ...highlighterStyle,
+          }}
+        />
+      )}
       {showText && (
         <div
           className="pointer-events-none absolute flex items-end p-1 text-white"
