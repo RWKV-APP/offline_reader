@@ -87,6 +87,7 @@ const handleNode = (_node: Node) => {
   }
   const textContent = node.textContent?.trim();
 
+  // 如果文本内容为空, 则不处理
   if (textContent === '' || textContent === undefined || textContent === null) {
     return;
   }
@@ -105,7 +106,41 @@ const handleNode = (_node: Node) => {
     return;
   }
 
-  (node as HTMLElement).style.outline = '1px solid rgba(0, 0, 0, 0.1)';
+  // 检查节点是否隐藏
+  const computedStyle = window.getComputedStyle(node);
+  if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+    return;
+  }
+
+  const childNodes = Array.from(node.childNodes) as HTMLElement[];
+  const childNodesLength = childNodes.length;
+  let nonTextChildNodesTextContent = '';
+
+  for (const childNode of childNodes) {
+    const childNodeName = childNode.nodeName;
+
+    if (childNodeName !== '#text') {
+      const childNodeTextContent = childNode.textContent?.trim();
+      // 如果非 #text 子节点承载了全部的内容, 则不处理
+      nonTextChildNodesTextContent += childNodeTextContent;
+      if (nonTextChildNodesTextContent === textContent) {
+        return;
+      }
+    }
+  }
+
+  if (childNodesLength == 1) {
+    //
+  } else if (childNodesLength > 1) {
+    //
+  } else {
+    //
+  }
+
+  // DEBUG 时标记
+  (node as HTMLElement).style.outline = '2px solid rgba(0, 0, 0, 0.1)';
+
+  // DEBUG 时打印
   console.log(node);
   console.log(textContent);
 };
