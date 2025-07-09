@@ -186,7 +186,7 @@ initializeKeyListeners();
 
 const debuggingType: string[] = [];
 const debuggingTypeUpper = debuggingType.map(item => item.toUpperCase());
-const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'html', 'pre'];
+const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'html', 'pre', 'code'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 
 const handleNode = (_node: Node) => {
@@ -232,8 +232,13 @@ const handleNode = (_node: Node) => {
   }
 
   const parentNode = node.parentElement;
-  if (parentNode && parentNode.hasAttribute('rwkv-offline-target')) {
-    return;
+  if (parentNode) {
+    if (parentNode.hasAttribute('rwkv-offline-target')) {
+      return;
+    }
+    if (ignoreTypeLower.includes(parentNode.nodeName) || ignoreTypeUpper.includes(parentNode.nodeName)) {
+      return;
+    }
   }
 
   if (node.hasAttribute('translation-done')) {
