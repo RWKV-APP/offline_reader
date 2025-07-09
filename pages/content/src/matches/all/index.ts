@@ -41,6 +41,58 @@ const handleMouseOver = (event: MouseEvent) => {
   }
 };
 
+const forceBreakLineTags = ['ul', 'ol', 'li'];
+const forceBreakLineTagsUpper = forceBreakLineTags.map(item => item.toUpperCase());
+
+const checkBreakLineHappened = (node: HTMLElement) => {
+  const computedStyle = window.getComputedStyle(node);
+  if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+    return false;
+  }
+
+  if (forceBreakLineTagsUpper.includes(node.nodeName) || forceBreakLineTags.includes(node.nodeName)) {
+    return true;
+  }
+
+  // 获取文本内容
+  const textContent = node.textContent?.trim();
+  if (!textContent) {
+    return false;
+  }
+
+  // 方法1: 检查 white-space 属性
+  if (computedStyle.whiteSpace === 'nowrap') {
+    return false; // 强制不换行，所以没有折行
+  }
+
+  // 方法2: 检查元素高度是否大于行高
+  const lineHeight = parseFloat(computedStyle.lineHeight) || parseFloat(computedStyle.fontSize) * 1.2;
+  const elementHeight = node.offsetHeight;
+
+  // 如果元素高度明显大于行高，说明发生了折行
+  if (elementHeight > lineHeight * 1.5) {
+    return true;
+  }
+
+  // 方法3: 检查是否有换行符
+  if (textContent.includes('\n') || textContent.includes('\r')) {
+    return true;
+  }
+
+  // 方法4: 检查文本长度和容器宽度的比例
+  const elementWidth = node.offsetWidth;
+  const fontSize = parseFloat(computedStyle.fontSize);
+  const estimatedCharWidth = fontSize * 0.6; // 估算每个字符的平均宽度
+  const estimatedTextWidth = textContent.length * estimatedCharWidth;
+
+  // 如果估算的文本宽度明显大于容器宽度，很可能发生折行
+  if (estimatedTextWidth > elementWidth * 1.2) {
+    return true;
+  }
+
+  return false;
+};
+
 const initializeHoverListener = () => {
   document.addEventListener('mouseover', handleMouseOver);
   console.log('Hover listener initialized (event dispatch only).');
@@ -76,7 +128,7 @@ initializeKeyListeners();
 
 const debuggingType: string[] = [];
 const debuggingTypeUpper = debuggingType.map(item => item.toUpperCase());
-const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'html'];
+const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'html', 'pre'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 
 const handleNode = (_node: Node) => {
@@ -169,19 +221,24 @@ const handleNode = (_node: Node) => {
     return;
   }
 
-  if (childNodesLength == 1) {
-    //
-  } else if (childNodesLength > 1) {
-    //
-  } else {
-    //
-  }
-
   // DEBUG 时标记
   node.style.outline = '1px solid rgba(255, 0, 0, 0.2)';
   node.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
 
   node.setAttribute('rwkv-offline-target', 'true');
+  const breakLineHappened = checkBreakLineHappened(node);
+  let parentElementName = 'span';
+  if (breakLineHappened) {
+    parentElementName = 'div';
+  }
+
+  const parentElement = document.createElement(parentElementName);
+  let inner = breakLineHappened ? '' : ' ';
+  for (let i = 0; i < textContent.length / 6; i++) {
+    inner += '哈';
+  }
+  parentElement.textContent = inner;
+  node.appendChild(parentElement);
 
   // DEBUG 时打印
   console.log({
