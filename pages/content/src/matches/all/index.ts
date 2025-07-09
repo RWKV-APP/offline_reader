@@ -77,36 +77,29 @@ initializeKeyListeners();
 const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 
-const handleNode = (node: Node) => {
-  // 对 node 做你要的操作
-  if (ignoreTypeUpper.includes(node.nodeName) || ignoreTypeLower.includes(node.nodeName)) {
+const handleNode = (_node: Node) => {
+  const node = _node as HTMLElement;
+  const nodeName = node.nodeName;
+
+  // 过滤掉不需要处理的节点
+  if (ignoreTypeUpper.includes(nodeName) || ignoreTypeLower.includes(nodeName)) {
+    return;
+  }
+  const textContent = node.textContent?.trim();
+
+  if (textContent === '' || textContent === undefined || textContent === null) {
     return;
   }
 
-  // 只获取该元素本身的文本内容，不包括子元素
-  let ownTextContent = '';
-  if (node.nodeType === Node.ELEMENT_NODE) {
-    const element = node as Element;
-    // 遍历直接子节点，只收集文本节点的内容
-    for (const childNode of Array.from(element.childNodes)) {
-      if (childNode.nodeType === Node.TEXT_NODE) {
-        ownTextContent += childNode.textContent || '';
-      }
-    }
-  }
+  // 只包含符号和数字
+  const isOnlySymbolsAndNumbers = /^[0-9\s\p{P}]+$/u.test(textContent);
 
-  ownTextContent = ownTextContent.trim();
+  // 长度太短
+  const isTooShort = textContent.length <= 2;
 
-  if (ownTextContent === '' || ownTextContent === undefined || ownTextContent === null) {
-    return;
-  }
-
-  // 过滤条件：如果只包含字母数字、或者只包含符号数字、或者长度太短，则不处理
-  const isOnlySymbolsAndNumbers = /^[0-9\s\p{P}]+$/u.test(ownTextContent);
-  const isTooShort = ownTextContent.length <= 2;
-
-  // 检查是否包含至少一段由3个或更多连续英文字母组成的文本
-  const hasConsecutiveEnglishLetters = /[a-zA-Z]{3,}/.test(ownTextContent);
+  // 包含的英文字符长度小于 3
+  // "ab 哈哈哈ab 哈哈哈" 包含 4 个英文字符, 但是, 最长连续英文字符是 2, 所以, 不解释了
+  const hasConsecutiveEnglishLetters = /[a-zA-Z]{3,}/.test(textContent);
 
   if (isOnlySymbolsAndNumbers || isTooShort || !hasConsecutiveEnglishLetters) {
     return;
@@ -114,7 +107,7 @@ const handleNode = (node: Node) => {
 
   (node as HTMLElement).style.outline = '1px solid rgba(0, 0, 0, 0.1)';
   console.log(node);
-  console.log(ownTextContent);
+  console.log(textContent);
 };
 
 const observer = new MutationObserver(mutationsList => {
