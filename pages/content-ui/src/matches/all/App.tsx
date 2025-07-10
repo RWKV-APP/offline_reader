@@ -1,3 +1,4 @@
+import { query } from '@extension/shared';
 import { useEffect, useState } from 'react';
 
 // Define the shape of the highlighter's style state
@@ -8,8 +9,6 @@ interface HighlighterStyle {
   width: number;
   height: number;
 }
-
-const port = 52345;
 
 const formatTranslation = (translation: string) => {
   // 去掉 `[12]` 这种形式
@@ -35,19 +34,6 @@ const formatText = (text: string) => {
   return text.replace(citationRegex, '').trim();
 };
 
-const query = async (textToTranslate: string) => {
-  const url = `http://localhost:${port}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ text: textToTranslate }),
-  });
-  const data = await res.json();
-  return data;
-};
-
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
     display: 'none',
@@ -56,6 +42,7 @@ export default function App() {
     width: 0,
     height: 0,
   });
+
   const [text, setText] = useState('');
   const [translation, setTranslation] = useState('');
   const [showText, setShowText] = useState(false);
@@ -131,7 +118,7 @@ export default function App() {
           console.log('sourceText.length > 3000', sourceText.length);
           return;
         }
-        const data = await query(sourceText);
+        const data = await query({ text: sourceText, logic: 'loop' });
         const { translation } = data;
         setTranslation(formatTranslation(translation));
       }, 50);

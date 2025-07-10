@@ -1,66 +1,9 @@
+import { query } from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
 
 console.log('[CEB] All content script loaded');
 
 void sampleFunction();
-
-const query = async (textToTranslate: string) => {
-  const startTimestampInMs = Date.now();
-  const model = 'Qwen/Qwen3-8B';
-  const enable_thinking = false;
-  const apiKey = '???';
-  const url = window.location.href;
-
-  try {
-    const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        enable_thinking,
-        messages: [
-          {
-            role: 'system',
-            content: `
-你是一个专业的翻译, 将用户输入的文本翻译为中文
-不要包含任何翻译语言之外的内容
-中英文之间一定要加上空格, 用户访问的 url 是: ${url}
-`,
-          },
-          {
-            role: 'user',
-            content: textToTranslate,
-          },
-        ],
-      }),
-    });
-
-    const endTimestampInMs = Date.now();
-    const durationInMs = endTimestampInMs - startTimestampInMs;
-    console.log(`Translation completed in ${durationInMs}ms`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const responseData = await response.json();
-    console.log(responseData);
-
-    const { choices } = responseData;
-    if (choices && choices.length > 0) {
-      const { message } = choices[0];
-      const { content } = message;
-      console.log(content);
-      return content;
-    }
-  } catch (error) {
-    console.error('Translation error:', error);
-    return '';
-  }
-};
 
 const handleMouseOver = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
@@ -289,8 +232,8 @@ const handleNode = (_node: Node) => {
   }
 
   // DEBUG 时标记
-  node.style.outline = '1px solid rgba(255, 0, 0, 0.2)';
-  node.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+  node.style.outline = '1px solid rgba(255, 0, 0, 1.0)';
+  // node.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
 
   node.setAttribute('rwkv-offline-target', 'true');
   const breakLineHappened = checkBreakLineHappened(node);
@@ -302,7 +245,7 @@ const handleNode = (_node: Node) => {
   const parentElement = document.createElement(parentElementName);
 
   let inner = breakLineHappened ? '' : ' ';
-  query(textContent).then(translation => {
+  query({ text: textContent, logic: 'translate' }).then(({ translation }) => {
     if (translation) {
       inner = translation;
       parentElement.textContent = inner;
