@@ -3,12 +3,16 @@ import { sampleFunction } from '@src/sample-function';
 
 console.log('[CEB] All content script loaded');
 
+const targetClass = 'rwkv-offline-target';
+const translationDoneClass = 'rwkv-offline-translation-done';
+
 void sampleFunction();
 
 const handleMouseOver = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
+  const isTarget = target.classList.contains(targetClass);
 
-  if (target && target.innerText) {
+  if (isTarget && target && target.innerText) {
     const text = target.innerText.trim();
 
     if (text) {
@@ -176,7 +180,7 @@ const handleNode = (_node: Node) => {
 
   const parentNode = node.parentElement;
   if (parentNode) {
-    if (parentNode.hasAttribute('rwkv-offline-target')) {
+    if (parentNode.classList.contains(targetClass)) {
       return;
     }
     if (ignoreTypeLower.includes(parentNode.nodeName) || ignoreTypeUpper.includes(parentNode.nodeName)) {
@@ -184,7 +188,7 @@ const handleNode = (_node: Node) => {
     }
   }
 
-  if (node.hasAttribute('translation-done')) {
+  if (node.classList.contains(translationDoneClass)) {
     return;
   }
 
@@ -235,7 +239,7 @@ const handleNode = (_node: Node) => {
   node.style.outline = '1px solid rgba(255, 0, 0, 1.0)';
   // node.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
 
-  node.setAttribute('rwkv-offline-target', 'true');
+  node.classList.add(targetClass);
   const breakLineHappened = checkBreakLineHappened(node);
   let parentElementName = 'span';
   if (breakLineHappened) {
@@ -250,7 +254,7 @@ const handleNode = (_node: Node) => {
       inner = translation;
       parentElement.textContent = inner;
       node.appendChild(parentElement);
-      node.setAttribute('translation-done', 'true');
+      node.classList.add(translationDoneClass);
     }
   });
 
