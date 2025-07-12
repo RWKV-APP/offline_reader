@@ -250,9 +250,9 @@ const handleNode = (_node: Node) => {
 
   let inner = breakLineHappened ? '' : ' ';
   query({ text: textContent, logic: 'translate' }).then(json => {
-    const { translation } = json;
-    if (translation) {
-      inner = translation;
+    const { translation, source } = json;
+    if (translation && translation !== source) {
+      inner = parentElementName ? ' ' + translation : translation;
       parentElement.textContent = inner;
       node.appendChild(parentElement);
       node.classList.add(translationDoneClass);
