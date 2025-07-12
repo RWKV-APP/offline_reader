@@ -1,5 +1,6 @@
 import { query } from '@extension/shared';
 import { useEffect, useState } from 'react';
+import type React from 'react';
 
 // Define the shape of the highlighter's style state
 interface HighlighterStyle {
@@ -33,6 +34,38 @@ const formatText = (text: string) => {
   const citationRegex = /\[[^\]]*\]/g;
   return text.replace(citationRegex, '').trim();
 };
+
+const RWKVNotification: React.FC = () => (
+  <div
+    style={{
+      position: 'absolute',
+      top: 'auto',
+      left: 32,
+      bottom: 32,
+      width: 'auto',
+      height: 'auto',
+      fontSize: '4rem',
+      lineHeight: 1,
+      backgroundColor: 'rgba(0, 0, 0, 1)',
+      padding: '0.5rem',
+      transition: 'opacity 0.3s ease-in-out',
+      cursor: 'pointer',
+      zIndex: 2147483647, // 确保在最顶层
+      color: 'white', // 确保文字可见
+      pointerEvents: 'none',
+    }}
+    onMouseEnter={e => {
+      console.log('onMouseEnter - 透明度变为 0.1');
+      e.currentTarget.style.opacity = '0.1';
+    }}
+    onMouseLeave={e => {
+      console.log('onMouseLeave - 透明度恢复为 1');
+      e.currentTarget.style.opacity = '1';
+    }}>
+    RWKV 离线翻译
+    <div style={{ fontSize: '2rem', lineHeight: 1 }}>无需联网即可使用 AI 进行翻译任务</div>
+  </div>
+);
 
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
@@ -113,7 +146,6 @@ export default function App() {
     if (isRightShiftPressed && text) {
       const timer = setInterval(async () => {
         const sourceText = formatText(text);
-        // TODO: 通常, 这种情况发生在, 截获了大量 innerText 时
         if (sourceText.length > 3000) {
           console.log('sourceText.length > 3000', sourceText.length);
           return;
@@ -170,6 +202,7 @@ export default function App() {
           {translation}
         </div>
       )}
+      <RWKVNotification />
     </>
   );
 }

@@ -249,7 +249,8 @@ const handleNode = (_node: Node) => {
   const parentElement = document.createElement(parentElementName);
 
   let inner = breakLineHappened ? '' : ' ';
-  query({ text: textContent, logic: 'translate' }).then(({ translation }) => {
+  query({ text: textContent, logic: 'translate' }).then(json => {
+    const { translation } = json;
     if (translation) {
       inner = translation;
       parentElement.textContent = inner;
