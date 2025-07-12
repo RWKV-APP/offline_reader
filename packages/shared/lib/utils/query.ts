@@ -47,6 +47,16 @@ export const formatTranslation = (translation: string) => {
   return addSpaceBetweenChineseAndEnglish(translation.replace(regex, '').replace(regex2, '').trim());
 };
 
+export const queryWS = async (body: QueryBody): Promise<QueryResponse> => {
+  const type = 'query';
+  const msgBody = {
+    type,
+    body,
+  };
+  const res = await chrome.runtime.sendMessage(msgBody);
+  return res;
+};
+
 export const query = async (body: QueryBody): Promise<QueryResponse> => {
   let { text } = body;
   text = formatQueryText(text);

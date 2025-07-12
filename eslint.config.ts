@@ -65,6 +65,7 @@ export default config(
       'arrow-body-style': ['warn', 'as-needed'],
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/consistent-type-exports': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       'import-x/order': [
         'warn',
         {

@@ -1,4 +1,4 @@
-import { formatQueryText, formatTranslation, query } from '@extension/shared';
+import { formatQueryText, formatTranslation, ignoreHref, query } from '@extension/shared';
 import { useEffect, useState } from 'react';
 import type React from 'react';
 
@@ -11,37 +11,44 @@ interface HighlighterStyle {
   height: number;
 }
 
-const RWKVNotification: React.FC = () => (
-  <div
-    style={{
-      position: 'absolute',
-      top: 'auto',
-      left: 32,
-      bottom: 32,
-      width: 'auto',
-      height: 'auto',
-      fontSize: '4rem',
-      lineHeight: 1,
-      backgroundColor: 'rgba(0, 0, 0, 1)',
-      padding: '0.5rem',
-      transition: 'opacity 0.3s ease-in-out',
-      cursor: 'pointer',
-      zIndex: 2147483647, // 确保在最顶层
-      color: 'white', // 确保文字可见
-      pointerEvents: 'none',
-    }}
-    onMouseEnter={e => {
-      console.log('onMouseEnter - 透明度变为 0.1');
-      e.currentTarget.style.opacity = '0.1';
-    }}
-    onMouseLeave={e => {
-      console.log('onMouseLeave - 透明度恢复为 1');
-      e.currentTarget.style.opacity = '1';
-    }}>
-    RWKV 离线翻译
-    <div style={{ fontSize: '2rem', lineHeight: 1 }}>无需联网即可使用 AI 进行翻译任务</div>
-  </div>
-);
+const RWKVNotification: React.FC = () => {
+  const currentHref = window.location.href;
+  for (const href of ignoreHref) {
+    if (currentHref.startsWith(href)) return null;
+  }
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 'auto',
+        left: 32,
+        bottom: 32,
+        width: 'auto',
+        height: 'auto',
+        fontSize: '4rem',
+        lineHeight: 1,
+        backgroundColor: 'rgba(0, 0, 0, 1)',
+        padding: '0.5rem',
+        transition: 'opacity 0.3s ease-in-out',
+        cursor: 'pointer',
+        zIndex: 2147483647, // 确保在最顶层
+        color: 'white', // 确保文字可见
+        pointerEvents: 'none',
+      }}
+      onMouseEnter={e => {
+        console.log('onMouseEnter - 透明度变为 0.1');
+        e.currentTarget.style.opacity = '0.1';
+      }}
+      onMouseLeave={e => {
+        console.log('onMouseLeave - 透明度恢复为 1');
+        e.currentTarget.style.opacity = '1';
+      }}>
+      RWKV 离线翻译
+      <div style={{ fontSize: '2rem', lineHeight: 1 }}>无需联网即可使用 AI 进行翻译任务</div>
+    </div>
+  );
+};
 
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({

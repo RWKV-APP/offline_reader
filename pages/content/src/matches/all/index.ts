@@ -1,10 +1,7 @@
-import { query } from '@extension/shared';
+import { ignoreHref, query, targetClass, translationDoneClass } from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
 
 console.log('[CEB] All content script loaded');
-
-const targetClass = 'rwkv-offline-target';
-const translationDoneClass = 'rwkv-offline-translation-done';
 
 void sampleFunction();
 
@@ -133,12 +130,35 @@ initializeKeyListeners();
 
 const debuggingType: string[] = [];
 const debuggingTypeUpper = debuggingType.map(item => item.toUpperCase());
-const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'html', 'pre', 'code'];
+const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
+const ignoreTypes = ignoreTypeLower.concat(ignoreTypeUpper);
 
 const handleNode = (_node: Node) => {
+  const currentUrl = window.location.href;
+  for (const href of ignoreHref) {
+    const startWith = currentUrl.startsWith(href);
+    if (startWith) return;
+  }
+
   const node = _node as HTMLElement;
   const nodeName = node.nodeName;
+
+  for (const ignoreType of ignoreTypes) {
+    const closest = node.parentElement?.closest(ignoreType);
+    if (closest) return;
+  }
+
+  const parentNode = node.parentElement;
+
+  if (parentNode) {
+    if (parentNode.classList.contains(targetClass)) {
+      return;
+    }
+    if (ignoreTypeLower.includes(parentNode.nodeName) || ignoreTypeUpper.includes(parentNode.nodeName)) {
+      return;
+    }
+  }
 
   const containsDebuggingType = debuggingType.length > 0;
   if (containsDebuggingType) {
@@ -148,9 +168,8 @@ const handleNode = (_node: Node) => {
   }
 
   // 过滤掉不需要处理的节点
-  if (ignoreTypeUpper.includes(nodeName) || ignoreTypeLower.includes(nodeName)) {
-    return;
-  }
+  if (ignoreTypeUpper.includes(nodeName) || ignoreTypeLower.includes(nodeName)) return;
+
   const textContent = node.textContent?.trim();
 
   // 如果文本内容为空, 则不处理
@@ -162,14 +181,36 @@ const handleNode = (_node: Node) => {
   const isOnlySymbolsAndNumbers = /^[0-9\s\p{P}]+$/u.test(textContent);
 
   // 长度太短
-  const isTooShort = textContent.length <= 2;
+  const isTooShort = textContent.length <= 3;
 
   // 包含的英文字符长度小于 3
   // "ab 哈哈哈ab 哈哈哈" 包含 4 个英文字符, 但是, 最长连续英文字符是 2, 所以, 不解释了
-  const hasConsecutiveEnglishLetters = /[a-zA-Z]{3,}/.test(textContent);
+  const hasConsecutiveEnglishLetters = /[a-zA-Z]{4,}/.test(textContent);
 
   if (isOnlySymbolsAndNumbers || isTooShort || !hasConsecutiveEnglishLetters) {
     return;
+  }
+
+  if (parentNode?.parentElement) {
+    const parentComputedStyle = window.getComputedStyle(parentNode.parentElement);
+    if (
+      parentComputedStyle.display === 'none' ||
+      parentComputedStyle.visibility === 'hidden' ||
+      parentComputedStyle.opacity === '0'
+    ) {
+      return;
+    }
+  }
+
+  if (parentNode) {
+    const parentComputedStyle = window.getComputedStyle(parentNode);
+    if (
+      parentComputedStyle.display === 'none' ||
+      parentComputedStyle.visibility === 'hidden' ||
+      parentComputedStyle.opacity === '0'
+    ) {
+      return;
+    }
   }
 
   // 检查节点是否隐藏
@@ -178,23 +219,11 @@ const handleNode = (_node: Node) => {
     return;
   }
 
-  const parentNode = node.parentElement;
-  if (parentNode) {
-    if (parentNode.classList.contains(targetClass)) {
-      return;
-    }
-    if (ignoreTypeLower.includes(parentNode.nodeName) || ignoreTypeUpper.includes(parentNode.nodeName)) {
-      return;
-    }
-  }
-
   if (node.classList.contains(translationDoneClass)) {
     return;
   }
 
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
-  const childNodesLength = childNodes.length;
-  const childNodesNames = childNodes.map(item => item.nodeName);
   let nonTextChildNodesTextContent = '';
   let notEmptyTextChildNodesCount = 0;
   for (const childNode of childNodes) {
@@ -214,13 +243,7 @@ const handleNode = (_node: Node) => {
       const textChildNodeTextContent = childNode.textContent?.trim();
       const hasText = textChildNodeTextContent && textChildNodeTextContent.length > 0;
 
-      // if (childNodesLength == 7 && node.attributes.getNamedItem('icon')?.value === 'repo-forked') {
-      //   console.log({ textChildNodeTextContent });
-      // }
-
-      if (hasText) {
-        notEmptyTextChildNodesCount++;
-      }
+      if (hasText) notEmptyTextChildNodesCount++;
     }
   }
 
@@ -259,17 +282,23 @@ const handleNode = (_node: Node) => {
     }
   });
 
-  // DEBUG 时打印
-  console.log({
-    textContent,
-    node,
-    childNodesLength,
-    childNodesNames,
-    textChildNodesCount: notEmptyTextChildNodesCount,
-  });
+  // // DEBUG 时打印
+  // console.log({
+  //   textContent,
+  //   node,
+  //   childNodesLength,
+  //   childNodesNames,
+  //   textChildNodesCount: notEmptyTextChildNodesCount,
+  // });
 };
 
 const observer = new MutationObserver(mutationsList => {
+  const currentUrl = window.location.href;
+  for (const href of ignoreHref) {
+    const startWith = currentUrl.startsWith(href);
+    if (startWith) return;
+  }
+
   for (const mutation of mutationsList) {
     if (mutation.type === 'childList') {
       Array.from(mutation.addedNodes).forEach(newNode => {
