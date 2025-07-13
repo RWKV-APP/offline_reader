@@ -185,6 +185,7 @@ const handleNode = (_node: Node) => {
 
   // 包含的英文字符长度小于 3
   // "ab 哈哈哈ab 哈哈哈" 包含 4 个英文字符, 但是, 最长连续英文字符是 2, 所以, 不解释了
+  // TODO: 需要考虑 x.com 的 "For you"
   const hasConsecutiveEnglishLetters = /[a-zA-Z]{4,}/.test(textContent);
 
   if (isOnlySymbolsAndNumbers || isTooShort || !hasConsecutiveEnglishLetters) {
