@@ -1,4 +1,4 @@
-import { formatQueryText, formatTranslation, ignoreHref, query } from '@extension/shared';
+import { formatQueryText, formatTranslation, ignoreHref, queryWS } from '@extension/shared';
 import { useEffect, useState } from 'react';
 import type React from 'react';
 
@@ -125,22 +125,22 @@ export default function App() {
     }
   }, [isRightShiftPressed, isLeftShiftPressed, text, translation]);
 
-  useEffect(() => {
-    if (isRightShiftPressed && text) {
-      const timer = setInterval(async () => {
-        const sourceText = text;
-        if (sourceText.length > 3000) {
-          console.log('sourceText.length > 3000', sourceText.length);
-          return;
-        }
-        const data = await query({ text: sourceText, logic: 'loop' });
-        const { translation } = data;
-        setTranslation(formatTranslation(translation));
-      }, 50);
-      return () => clearInterval(timer);
-    }
-    return () => {};
-  }, [isRightShiftPressed, text]);
+  // useEffect(() => {
+  //   if (isRightShiftPressed && text) {
+  //     const timer = setInterval(async () => {
+  //       const sourceText = text;
+  //       if (sourceText.length > 3000) {
+  //         console.log('sourceText.length > 3000', sourceText.length);
+  //         return;
+  //       }
+  //       const data = await query({ text: sourceText, logic: 'loop' });
+  //       const { translation } = data;
+  //       setTranslation(formatTranslation(translation));
+  //     }, 50);
+  //     return () => clearInterval(timer);
+  //   }
+  //   return () => {};
+  // }, [isRightShiftPressed, text]);
 
   useEffect(() => {
     if (!isRightShiftPressed) {

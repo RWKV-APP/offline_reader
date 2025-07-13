@@ -1,22 +1,11 @@
+import type { ToBackend, FromBackend } from './types.js';
+
 const port = 52345;
 const url = `http://localhost:${port}`;
 const method = 'POST';
 const headers = {
   'Content-Type': 'application/json',
 };
-
-interface QueryBody {
-  /**
-   * The text to translate. The "\n\n" will be replaced with a "\n". The "\n\n" is the stop token of RWKV Translation model.
-   */
-  text: string;
-  logic: 'translate' | 'loop';
-}
-
-interface QueryResponse {
-  translation: string;
-  source: string;
-}
 
 export const formatQueryText = (text: string) => {
   // 统一处理所有方括号引用格式：
@@ -47,31 +36,11 @@ export const formatTranslation = (translation: string) => {
   return addSpaceBetweenChineseAndEnglish(translation.replace(regex, '').replace(regex2, '').trim());
 };
 
-export const queryWS = async (body: QueryBody): Promise<QueryResponse> => {
-  const type = 'query';
-  const msgBody = {
-    type,
+export const queryWS = async (body: ToBackend['body']): Promise<FromBackend> => {
+  const msgBody: ToBackend = {
+    func: 'query',
     body,
   };
-  const res = await chrome.runtime.sendMessage(msgBody);
+  const res = await chrome.runtime.sendMessage<ToBackend, FromBackend>(msgBody);
   return res;
-};
-
-export const query = async (body: QueryBody): Promise<QueryResponse> => {
-  let { text } = body;
-  text = formatQueryText(text);
-  body = {
-    ...body,
-    text,
-  };
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  // eslint-disable-next-line prefer-const
-  let { translation, source } = data;
-  translation = formatTranslation(translation);
-  return { translation, source };
 };

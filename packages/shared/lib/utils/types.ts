@@ -8,3 +8,21 @@ export type ExcludeValuesFromBaseArrayType<B extends string[], E extends (string
   TupleToUnion<E>
 >[];
 export type ManifestType = chrome.runtime.ManifestV3;
+
+export interface ToBackend {
+  func: 'query';
+  body: {
+    source: string;
+    logic: 'translate' | 'loop';
+    url: string;
+  };
+}
+
+export interface FromBackend {
+  func: 'query';
+  body: {
+    source: string;
+    translation: string;
+    url: string;
+  };
+}

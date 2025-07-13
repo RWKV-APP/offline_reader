@@ -1,5 +1,6 @@
 import 'webextension-polyfill';
 import { exampleThemeStorage } from '@extension/storage';
+import type { ToBackend, FromBackend } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -15,21 +16,21 @@ let ws: WebSocket | null = null;
 // 标志：是否正在连接
 let isConnecting = false;
 
-const waitingQuery: Record<string, { resolve: (value: { translation: string; source: string }) => void }> = {};
+const waitingQuery: Record<string, { resolve: (value: FromBackend) => void }> = {};
 
 const allTabs = new Map<number, chrome.tabs.Tab>();
 
 const listenMessageForUI = (
-  message: any,
+  message: ToBackend,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: any) => void,
+  sendResponse: (response?: FromBackend) => void,
 ): boolean => {
   console.log('listenMessageForUI', message);
-  const { type, body } = message;
-  const { text, logic } = body;
-  if (type === 'query') {
-    waitingQuery[text] = { resolve: sendResponse };
-    ws?.send(JSON.stringify(body));
+  const { func, body } = message;
+  const { source, logic, url } = body;
+  if (func === 'query') {
+    waitingQuery[source] = { resolve: sendResponse };
+    ws?.send(JSON.stringify({ source, logic, url }));
     return true;
   }
   return false;
@@ -147,10 +148,10 @@ const connectWebSocket = () => {
     };
 
     ws.onmessage = event => {
-      const { source, translation, timestamp } = JSON.parse(event.data);
+      const { source, translation, timestamp, url } = JSON.parse(event.data);
       const promise = waitingQuery[source];
       if (promise) {
-        promise.resolve({ translation, source });
+        promise.resolve({ func: 'query', body: { translation, source, url } });
         delete waitingQuery[source];
       }
     };

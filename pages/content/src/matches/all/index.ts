@@ -1,4 +1,4 @@
-import { ignoreHref, query, queryWS, targetClass, translationDoneClass } from '@extension/shared';
+import { ignoreHref, queryWS, targetClass, translationDoneClass } from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
 
 console.log('[CEB] All content script loaded');
@@ -270,10 +270,9 @@ const handleNode = (_node: Node) => {
   }
 
   const parentElement = document.createElement(parentElementName);
-
   let inner = breakLineHappened ? '' : ' ';
-  queryWS({ text: textContent, logic: 'translate' }).then(json => {
-    const { translation, source } = json;
+  queryWS({ source: textContent, logic: 'translate', url: currentUrl }).then(json => {
+    const { translation, source, url } = json.body;
     if (translation && translation !== source) {
       inner = parentElementName ? ' ' + translation : translation;
       parentElement.textContent = inner;
