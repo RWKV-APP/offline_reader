@@ -185,7 +185,7 @@ export default function App() {
           {translation}
         </div>
       )}
-      <RWKVNotification />
+      {/* <RWKVNotification /> */}
     </>
   );
 }

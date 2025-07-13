@@ -1,0 +1,7 @@
+- [x] shelf 的最大并发数量只有 6, 需要换成 Websocket
+- [ ] 使用教程
+- [ ] Backend UI
+- [ ] 用 Websocket 实时监听页面状态, 取消无效请求
+  - [ ] 同步 tabs 状态
+    - [ ] Websocket
+- [ ] 移除红框

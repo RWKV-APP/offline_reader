@@ -23,13 +23,16 @@ const listenMessageForUI = (
   message: any,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
-): void => {
+): boolean => {
+  console.log('listenMessageForUI', message);
   const { type, body } = message;
+  const { text, logic } = body;
   if (type === 'query') {
-    const { text } = body;
     waitingQuery[text] = { resolve: sendResponse };
     ws?.send(JSON.stringify(body));
+    return true;
   }
+  return false;
 };
 
 const startListenMessage = () => {
@@ -144,15 +147,11 @@ const connectWebSocket = () => {
     };
 
     ws.onmessage = event => {
-      console.log('📩 收到消息:', event.data);
-      const { type, body } = JSON.parse(event.data);
-      if (type === 'query') {
-        const { text } = body;
-        const promise = waitingQuery[text];
-        if (promise) {
-          promise.resolve(body);
-          delete waitingQuery[text];
-        }
+      const { source, translation, timestamp } = JSON.parse(event.data);
+      const promise = waitingQuery[source];
+      if (promise) {
+        promise.resolve({ translation, source });
+        delete waitingQuery[source];
       }
     };
 
