@@ -32,7 +32,9 @@
 ## Bugs
 
 - [ ] 🔥 有时候还有任务呢, 就自动停止了: https://github.com/
-- [ ] 🔥 某些 circle progress 不会消失: https://github.com/
+- [ ] 🔥 某些 circle progress 不会消失
+  - [ ] https://github.com/
+  - [ ] https://www.npmjs.com/package/cld3-asm
 - [ ] 🔥 Can not copy-paste: https://chatgpt.com/
 
 ## Report to Algorithm coleague

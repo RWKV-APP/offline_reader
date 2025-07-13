@@ -1,4 +1,4 @@
-import { ignoreHref, queryWS, targetClass, translationDoneClass } from '@extension/shared';
+import { ignoreHref, isChinese, queryWS, targetClass, translationDoneClass } from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
 
 console.log('[CEB] All content script loaded');
@@ -58,9 +58,7 @@ const checkBreakLineHappened = (node: HTMLElement) => {
 
   // 获取文本内容
   const textContent = node.textContent?.trim();
-  if (!textContent) {
-    return false;
-  }
+  if (!textContent) return false;
 
   // 方法1: 检查 white-space 属性
   if (computedStyle.whiteSpace === 'nowrap') {
@@ -128,8 +126,6 @@ const initializeKeyListeners = () => {
 // Initialize the key listener
 initializeKeyListeners();
 
-const debuggingType: string[] = [];
-const debuggingTypeUpper = debuggingType.map(item => item.toUpperCase());
 const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 const ignoreTypes = ignoreTypeLower.concat(ignoreTypeUpper);
@@ -144,38 +140,31 @@ const handleNode = (_node: Node) => {
   const node = _node as HTMLElement;
   const nodeName = node.nodeName;
 
+  const parentNode = node.parentElement;
+  if (!parentNode) return;
+
+  const parentNodeName = parentNode.nodeName;
+
   for (const ignoreType of ignoreTypes) {
-    const closest = node.parentElement?.closest(ignoreType);
+    const closest = parentNode?.closest(ignoreType);
     if (closest) return;
   }
 
-  const parentNode = node.parentElement;
+  if (parentNode.classList.contains(targetClass)) return;
 
-  if (parentNode) {
-    if (parentNode.classList.contains(targetClass)) {
-      return;
-    }
-    if (ignoreTypeLower.includes(parentNode.nodeName) || ignoreTypeUpper.includes(parentNode.nodeName)) {
-      return;
-    }
-  }
-
-  const containsDebuggingType = debuggingType.length > 0;
-  if (containsDebuggingType) {
-    if (!debuggingTypeUpper.includes(nodeName) && !debuggingType.includes(nodeName)) {
-      return;
-    }
-  }
+  // 如果父节点不需要处理
+  if (ignoreTypes.includes(parentNodeName)) return;
 
   // 过滤掉不需要处理的节点
-  if (ignoreTypeUpper.includes(nodeName) || ignoreTypeLower.includes(nodeName)) return;
+  if (ignoreTypes.includes(nodeName)) return;
 
   const textContent = node.textContent?.trim();
 
   // 如果文本内容为空, 则不处理
-  if (textContent === '' || textContent === undefined || textContent === null) {
-    return;
-  }
+  if (textContent === '' || textContent === undefined || textContent === null) return;
+
+  // 不处理汉语, 因为当前的模型就是汉语
+  if (isChinese(textContent)) return;
 
   // 只包含符号和数字
   const isOnlySymbolsAndNumbers = /^[0-9\s\p{P}]+$/u.test(textContent);

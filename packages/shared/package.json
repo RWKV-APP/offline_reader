@@ -23,6 +23,7 @@
     "postinstall": "pnpm ready"
   },
   "dependencies": {
+    "franc": "^6.2.0",
     "react-error-boundary": "^6.0.0"
   },
   "devDependencies": {
