@@ -1,4 +1,12 @@
-import { ignoreHref, isChinese, queryWS, targetClass, translationDoneClass } from '@extension/shared';
+import {
+  formatTranslation,
+  ignoreHref,
+  isChinese,
+  isUrl,
+  queryWS,
+  targetClass,
+  translationDoneClass,
+} from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
 
 console.log('[CEB] All content script loaded');
@@ -130,41 +138,42 @@ const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', '
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 const ignoreTypes = ignoreTypeLower.concat(ignoreTypeUpper);
 
-const handleNode = (_node: Node) => {
+const handleNode = (_node: Node): boolean => {
   const currentUrl = window.location.href;
   for (const href of ignoreHref) {
     const startWith = currentUrl.startsWith(href);
-    if (startWith) return;
+    if (startWith) return false;
   }
 
   const node = _node as HTMLElement;
   const nodeName = node.nodeName;
 
   const parentNode = node.parentElement;
-  if (!parentNode) return;
+  if (!parentNode) return false;
 
   const parentNodeName = parentNode.nodeName;
 
   for (const ignoreType of ignoreTypes) {
     const closest = parentNode?.closest(ignoreType);
-    if (closest) return;
+    if (closest) return false;
   }
 
-  if (parentNode.classList.contains(targetClass)) return;
+  if (parentNode.classList.contains(targetClass)) return false;
 
   // 如果父节点不需要处理
-  if (ignoreTypes.includes(parentNodeName)) return;
+  if (ignoreTypes.includes(parentNodeName)) return false;
 
   // 过滤掉不需要处理的节点
-  if (ignoreTypes.includes(nodeName)) return;
+  if (ignoreTypes.includes(nodeName)) return false;
 
   const textContent = node.textContent?.trim();
 
   // 如果文本内容为空, 则不处理
-  if (textContent === '' || textContent === undefined || textContent === null) return;
+  if (textContent === '' || textContent === undefined || textContent === null) return false;
 
   // 不处理汉语, 因为当前的模型就是汉语
-  if (isChinese(textContent)) return;
+  if (isChinese(textContent)) return false;
+  if (isUrl(textContent)) return false;
 
   // 只包含符号和数字
   const isOnlySymbolsAndNumbers = /^[0-9\s\p{P}]+$/u.test(textContent);
@@ -178,7 +187,7 @@ const handleNode = (_node: Node) => {
   const hasConsecutiveEnglishLetters = /[a-zA-Z]{4,}/.test(textContent);
 
   if (isOnlySymbolsAndNumbers || isTooShort || !hasConsecutiveEnglishLetters) {
-    return;
+    return false;
   }
 
   if (parentNode?.parentElement) {
@@ -188,7 +197,7 @@ const handleNode = (_node: Node) => {
       parentComputedStyle.visibility === 'hidden' ||
       parentComputedStyle.opacity === '0'
     ) {
-      return;
+      return false;
     }
   }
 
@@ -199,18 +208,18 @@ const handleNode = (_node: Node) => {
       parentComputedStyle.visibility === 'hidden' ||
       parentComputedStyle.opacity === '0'
     ) {
-      return;
+      return false;
     }
   }
 
   // 检查节点是否隐藏
   const computedStyle = window.getComputedStyle(node);
   if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
-    return;
+    return true;
   }
 
   if (node.classList.contains(translationDoneClass)) {
-    return;
+    return false;
   }
 
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
@@ -225,7 +234,7 @@ const handleNode = (_node: Node) => {
       // 如果非 #text 子节点承载了全部的内容, 则不处理
       nonTextChildNodesTextContent += childNodeTextContent;
       if (nonTextChildNodesTextContent === textContent) {
-        return;
+        return true;
       }
     }
 
@@ -245,7 +254,7 @@ const handleNode = (_node: Node) => {
     //   console.log(childNodes.map(item => item.textContent?.trim()));
     //   console.log('notEmptyTextChildNodesCount <= 0');
     // }
-    return;
+    return false;
   }
 
   // DEBUG 时标记
@@ -268,7 +277,8 @@ const handleNode = (_node: Node) => {
     .then(json => {
       const { translation, source } = json.body;
       if (translation && translation !== source) {
-        const inner = parentElementName ? ' ' + translation : translation;
+        let inner = parentElementName ? ' ' + translation : translation;
+        inner = formatTranslation(inner);
         parentElement.textContent = inner;
         node.appendChild(parentElement);
         node.classList.add(translationDoneClass);
@@ -278,12 +288,6 @@ const handleNode = (_node: Node) => {
       loadingSpinner.remove();
     });
 
-  setTimeout(() => {
-    if (loadingSpinner.parentElement) {
-      loadingSpinner.remove();
-    }
-  }, 100_000);
-
   // // DEBUG 时打印
   // console.log({
   //   textContent,
@@ -292,6 +296,8 @@ const handleNode = (_node: Node) => {
   //   childNodesNames,
   //   textChildNodesCount: notEmptyTextChildNodesCount,
   // });
+
+  return true;
 };
 
 const observer = new MutationObserver(mutationsList => {
@@ -302,15 +308,15 @@ const observer = new MutationObserver(mutationsList => {
   }
 
   for (const mutation of mutationsList) {
-    if (mutation.type === 'childList') {
-      Array.from(mutation.addedNodes).forEach(newNode => {
-        if (newNode.nodeType === 1) {
-          // 只处理 Element
-          handleNode(newNode);
-          // 如果新节点还有子元素
-          (newNode as Element).querySelectorAll('*').forEach(handleNode);
+    const type = mutation.type;
+    if (type === 'childList') {
+      const addedNodes = Array.from(mutation.addedNodes);
+      for (const addedNode of addedNodes) {
+        if (addedNode.nodeType === 1) {
+          const shouldHandleChildNodes = handleNode(addedNode);
+          if (shouldHandleChildNodes) (addedNode as Element).querySelectorAll('*').forEach(handleNode);
         }
-      });
+      }
     }
   }
 });
@@ -322,4 +328,4 @@ observer.observe(document.body, {
 });
 
 // 初始遍历已有 DOM
-document.querySelectorAll('*').forEach(handleNode);
+document.body.querySelectorAll('*').forEach(handleNode);

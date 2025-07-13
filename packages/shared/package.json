@@ -24,11 +24,13 @@
   },
   "dependencies": {
     "franc": "^6.2.0",
-    "react-error-boundary": "^6.0.0"
+    "react-error-boundary": "^6.0.0",
+    "validator": "^13.15.15"
   },
   "devDependencies": {
     "@extension/storage": "workspace:*",
     "@extension/tsconfig": "workspace:*",
+    "@types/validator": "^13.15.2",
     "type-fest": "^4.41.0"
   }
 }
