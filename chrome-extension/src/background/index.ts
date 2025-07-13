@@ -17,6 +17,8 @@ let isConnecting = false;
 
 const waitingQuery: Record<string, { resolve: (value: { translation: string; source: string }) => void }> = {};
 
+const allTabs = new Map<number, chrome.tabs.Tab>();
+
 const listenMessageForUI = (
   message: any,
   sender: chrome.runtime.MessageSender,
@@ -37,6 +39,90 @@ const startListenMessage = () => {
 
 const stopListenMessage = () => {
   chrome.runtime.onMessage.removeListener(listenMessageForUI);
+};
+
+const _onUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+  console.log('_onUpdated', { tabId, changeInfo, tab });
+};
+
+const _onRemoved = (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
+  console.log('_onRemoved', { tabId, removeInfo });
+  allTabs.delete(tabId);
+};
+
+const _onCreated = (tab: chrome.tabs.Tab) => {
+  console.log('_onCreated', { tab });
+  const { id } = tab;
+  if (!id) {
+    console.warn('tab id is not found', tab);
+    return;
+  }
+  allTabs.set(id, tab);
+};
+
+const _onActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
+  console.log('_onActivated', { activeInfo });
+  const { tabId } = activeInfo;
+  const tab = allTabs.get(tabId);
+  if (!tab) {
+    console.warn('tab is not found', tabId);
+    return;
+  }
+  allTabs.set(tabId, tab);
+};
+
+const _onReplaced = (addedTabId: number, removedTabId: number) => {
+  console.log('_onReplaced', { addedTabId, removedTabId });
+};
+
+const _onAttached = (tabId: number, attachInfo: chrome.tabs.TabAttachInfo) => {
+  console.log('_onAttached', { tabId, attachInfo });
+};
+
+const _onDetached = (tabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {
+  console.log('_onDetached', { tabId, detachInfo });
+};
+
+const _onHighlighted = (highlightInfo: chrome.tabs.TabHighlightInfo) => {
+  console.log('_onHighlighted', { highlightInfo });
+};
+
+const _onZoomChange = (zoomChangeInfo: chrome.tabs.ZoomChangeInfo) => {
+  console.log('_onZoomChange', { zoomChangeInfo });
+  const { tabId } = zoomChangeInfo;
+};
+
+const _onMoved = (tabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {
+  console.log('_onMoved', { tabId, moveInfo });
+};
+
+const startListenTabs = () => {
+  stopListenTabs();
+  chrome.tabs.onActivated.addListener(_onActivated);
+  chrome.tabs.onAttached.addListener(_onAttached);
+  chrome.tabs.onCreated.addListener(_onCreated);
+  chrome.tabs.onDetached.addListener(_onDetached);
+  chrome.tabs.onDetached.addListener(_onDetached);
+  chrome.tabs.onHighlighted.addListener(_onHighlighted);
+  // chrome.tabs.onMoved.addListener(_onMoved);
+  chrome.tabs.onRemoved.addListener(_onRemoved);
+  chrome.tabs.onReplaced.addListener(_onReplaced);
+  // chrome.tabs.onUpdated.addListener(_onUpdated);
+  // chrome.tabs.onZoomChange.addListener(_onZoomChange);
+};
+
+const stopListenTabs = () => {
+  chrome.tabs.onActivated.removeListener(_onActivated);
+  chrome.tabs.onAttached.removeListener(_onAttached);
+  chrome.tabs.onCreated.removeListener(_onCreated);
+  chrome.tabs.onDetached.removeListener(_onDetached);
+  chrome.tabs.onDetached.removeListener(_onDetached);
+  chrome.tabs.onHighlighted.removeListener(_onHighlighted);
+  // chrome.tabs.onMoved.removeListener(_onMoved);
+  chrome.tabs.onRemoved.removeListener(_onRemoved);
+  chrome.tabs.onReplaced.removeListener(_onReplaced);
+  // chrome.tabs.onUpdated.removeListener(_onUpdated);
+  // chrome.tabs.onZoomChange.removeListener(_onZoomChange);
 };
 
 const connectWebSocket = () => {
@@ -95,4 +181,5 @@ const connectWebSocket = () => {
 // 每秒调用一次 connectWebSocket
 setInterval(() => {
   connectWebSocket();
+  startListenTabs();
 }, 2000);
