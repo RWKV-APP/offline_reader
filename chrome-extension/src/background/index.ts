@@ -25,7 +25,6 @@ const listenMessageForUI = (
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: FromBackend) => void,
 ): boolean => {
-  console.log('listenMessageForUI', message);
   const { func, body } = message;
   const { source, logic, url } = body;
   if (func === 'query') {
@@ -56,23 +55,16 @@ const _onRemoved = (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
 
 const _onCreated = (tab: chrome.tabs.Tab) => {
   console.log('_onCreated', { tab });
-  const { id } = tab;
-  if (!id) {
-    console.warn('tab id is not found', tab);
-    return;
-  }
-  allTabs.set(id, tab);
 };
 
 const _onActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
   console.log('_onActivated', { activeInfo });
-  const { tabId } = activeInfo;
-  const tab = allTabs.get(tabId);
-  if (!tab) {
-    console.warn('tab is not found', tabId);
-    return;
-  }
-  allTabs.set(tabId, tab);
+  chrome.tabs.get(activeInfo.tabId).then(tab => {
+    const url = tab?.url;
+    if (url) {
+      ws?.send(JSON.stringify({ logic: 'url_highlighted', url }));
+    }
+  });
 };
 
 const _onReplaced = (addedTabId: number, removedTabId: number) => {
@@ -89,6 +81,12 @@ const _onDetached = (tabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {
 
 const _onHighlighted = (highlightInfo: chrome.tabs.TabHighlightInfo) => {
   console.log('_onHighlighted', { highlightInfo });
+  chrome.tabs.get(highlightInfo.tabIds[0]).then(tab => {
+    const url = tab?.url;
+    if (url) {
+      ws?.send(JSON.stringify({ logic: 'url_highlighted', url }));
+    }
+  });
 };
 
 const _onZoomChange = (zoomChangeInfo: chrome.tabs.ZoomChangeInfo) => {
