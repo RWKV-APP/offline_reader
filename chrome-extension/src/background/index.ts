@@ -109,7 +109,7 @@ const startListenTabs = () => {
   // chrome.tabs.onMoved.addListener(_onMoved);
   chrome.tabs.onRemoved.addListener(_onRemoved);
   chrome.tabs.onReplaced.addListener(_onReplaced);
-  // chrome.tabs.onUpdated.addListener(_onUpdated);
+  chrome.tabs.onUpdated.addListener(_onUpdated);
   // chrome.tabs.onZoomChange.addListener(_onZoomChange);
 };
 
@@ -123,7 +123,7 @@ const stopListenTabs = () => {
   // chrome.tabs.onMoved.removeListener(_onMoved);
   chrome.tabs.onRemoved.removeListener(_onRemoved);
   chrome.tabs.onReplaced.removeListener(_onReplaced);
-  // chrome.tabs.onUpdated.removeListener(_onUpdated);
+  chrome.tabs.onUpdated.removeListener(_onUpdated);
   // chrome.tabs.onZoomChange.removeListener(_onZoomChange);
 };
 
