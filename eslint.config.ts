@@ -66,6 +66,7 @@ export default config(
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/consistent-type-exports': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
       'import-x/order': [
         'warn',
         {
