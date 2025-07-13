@@ -270,17 +270,30 @@ const handleNode = (_node: Node) => {
     parentElementName = 'div';
   }
 
+  const loadingSpinner = document.createElement('span');
+  loadingSpinner.classList.add('ceb-loading-spinner');
+  node.appendChild(loadingSpinner);
+
   const parentElement = document.createElement(parentElementName);
-  let inner = breakLineHappened ? '' : ' ';
-  queryWS({ source: textContent, logic: 'translate', url: currentUrl }).then(json => {
-    const { translation, source, url } = json.body;
-    if (translation && translation !== source) {
-      inner = parentElementName ? ' ' + translation : translation;
-      parentElement.textContent = inner;
-      node.appendChild(parentElement);
-      node.classList.add(translationDoneClass);
+  queryWS({ source: textContent, logic: 'translate', url: currentUrl })
+    .then(json => {
+      const { translation, source } = json.body;
+      if (translation && translation !== source) {
+        const inner = parentElementName ? ' ' + translation : translation;
+        parentElement.textContent = inner;
+        node.appendChild(parentElement);
+        node.classList.add(translationDoneClass);
+      }
+    })
+    .finally(() => {
+      loadingSpinner.remove();
+    });
+
+  setTimeout(() => {
+    if (loadingSpinner.parentElement) {
+      loadingSpinner.remove();
     }
-  });
+  }, 100_000);
 
   // // DEBUG 时打印
   // console.log({
