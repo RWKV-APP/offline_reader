@@ -13,8 +13,15 @@
 
 ### 中优先级
 
+- [ ] 优先翻译 main 标签, See: [通常有哪些情况表明某些内容是网页的主要元素?](https://chatgpt.com/share/68740231-3100-8004-973e-b850038a27b7)
 - [ ] Store things in frontend
 - [ ] 使用最新权重
+- [ ] 固定不翻译一些内容
+  - [ ] github 的 files
+  - [ ] Twitter 的左侧部分
+- [ ] 不翻译已经关闭的标签
+- [ ] 渲染 frontend 在线状态
+- [ ] 根据 backend 在线状态决定是否启用翻译
 
 ### 低优先级
 
@@ -32,11 +39,17 @@
 
 ## Bugs
 
-- [ ] 🔥 有时候还有任务呢, 就自动停止了: https://github.com/
-- [ ] 🔥 某些 circle progress 不会消失
+### 高优先级
+
+- [ ] 有时候还有任务呢, 就自动停止了
+  - [ ] https://github.com/
+- [ ] 某些 circle progress 不会消失
   - [ ] https://github.com/
   - [ ] https://www.npmjs.com/package/cld3-asm
-- [ ] 🔥 Can not copy-paste: https://chatgpt.com/
+
+### 中优先级
+
+- [ ] Can not copy-paste: https://chatgpt.com/
 
 ## Report to Algorithm coleague
 
