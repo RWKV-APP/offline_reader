@@ -1,12 +1,5 @@
 import type { ToBackend, FromBackend } from './types.js';
 
-const port = 52345;
-const url = `http://localhost:${port}`;
-const method = 'POST';
-const headers = {
-  'Content-Type': 'application/json',
-};
-
 export const formatQueryText = (text: string) => {
   // 统一处理所有方括号引用格式：
   // - [12] 单个数字

@@ -1,13 +1,8 @@
 import 'webextension-polyfill';
-import { exampleThemeStorage } from '@extension/storage';
 import type { ToBackend, FromBackend } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
-
-exampleThemeStorage.get().then(theme => {
-  console.log('theme', theme);
-});
 
 const WS_PORT = 52346;
 const WS_URL = `ws://localhost:${WS_PORT}/ws`; // ← 改成你自己的地址
@@ -16,7 +11,7 @@ let ws: WebSocket | null = null;
 // 标志：是否正在连接
 let isConnecting = false;
 
-const waitingQuery: Record<string, { resolve: (value: FromBackend) => void }> = {};
+const waitingQuery: { [key: string]: { resolves: [(value: FromBackend) => void] } } = {};
 
 const allTabs = new Map<number, chrome.tabs.Tab>();
 
@@ -28,7 +23,16 @@ const listenMessageForUI = (
   const { func, body } = message;
   const { source, logic, url } = body;
   if (func === 'query') {
-    waitingQuery[source] = { resolve: sendResponse };
+    const v = waitingQuery[source];
+    if (v === undefined) {
+      waitingQuery[source] = { resolves: [sendResponse] };
+    } else {
+      if (v.resolves == undefined || v.resolves == null) {
+        v.resolves = [sendResponse];
+      } else {
+        v.resolves.push(sendResponse);
+      }
+    }
     ws?.send(JSON.stringify({ source, logic, url }));
     return true;
   }
@@ -44,21 +48,13 @@ const stopListenMessage = () => {
   chrome.runtime.onMessage.removeListener(listenMessageForUI);
 };
 
-const _onUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
-  console.log('_onUpdated', { tabId, changeInfo, tab });
-};
+const _onUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {};
 
-const _onRemoved = (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
-  console.log('_onRemoved', { tabId, removeInfo });
-  allTabs.delete(tabId);
-};
+const _onRemoved = (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {};
 
-const _onCreated = (tab: chrome.tabs.Tab) => {
-  console.log('_onCreated', { tab });
-};
+const _onCreated = (tab: chrome.tabs.Tab) => {};
 
 const _onActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
-  console.log('_onActivated', { activeInfo });
   chrome.tabs.get(activeInfo.tabId).then(tab => {
     const url = tab?.url;
     if (url) {
@@ -67,20 +63,13 @@ const _onActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
   });
 };
 
-const _onReplaced = (addedTabId: number, removedTabId: number) => {
-  console.log('_onReplaced', { addedTabId, removedTabId });
-};
+const _onReplaced = (addedTabId: number, removedTabId: number) => {};
 
-const _onAttached = (tabId: number, attachInfo: chrome.tabs.TabAttachInfo) => {
-  console.log('_onAttached', { tabId, attachInfo });
-};
+const _onAttached = (tabId: number, attachInfo: chrome.tabs.TabAttachInfo) => {};
 
-const _onDetached = (tabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {
-  console.log('_onDetached', { tabId, detachInfo });
-};
+const _onDetached = (tabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {};
 
 const _onHighlighted = (highlightInfo: chrome.tabs.TabHighlightInfo) => {
-  console.log('_onHighlighted', { highlightInfo });
   chrome.tabs.get(highlightInfo.tabIds[0]).then(tab => {
     const url = tab?.url;
     if (url) {
@@ -89,14 +78,9 @@ const _onHighlighted = (highlightInfo: chrome.tabs.TabHighlightInfo) => {
   });
 };
 
-const _onZoomChange = (zoomChangeInfo: chrome.tabs.ZoomChangeInfo) => {
-  console.log('_onZoomChange', { zoomChangeInfo });
-  const { tabId } = zoomChangeInfo;
-};
+const _onZoomChange = (zoomChangeInfo: chrome.tabs.ZoomChangeInfo) => {};
 
-const _onMoved = (tabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {
-  console.log('_onMoved', { tabId, moveInfo });
-};
+const _onMoved = (tabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {};
 
 const startListenTabs = () => {
   stopListenTabs();
@@ -147,9 +131,9 @@ const connectWebSocket = () => {
 
     ws.onmessage = event => {
       const { source, translation, timestamp, url } = JSON.parse(event.data);
-      const promise = waitingQuery[source];
-      if (promise) {
-        promise.resolve({ func: 'query', body: { translation, source, url } });
+      const v = waitingQuery[source];
+      if (v) {
+        v.resolves.forEach(resolve => resolve({ func: 'query', body: { translation, source, url } }));
         delete waitingQuery[source];
       }
     };

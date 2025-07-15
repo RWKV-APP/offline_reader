@@ -43,9 +43,11 @@
 
 - [ ] 有时候还有任务呢, 就自动停止了
   - [ ] https://github.com/
-- [ ] 某些 circle progress 不会消失
-  - [ ] https://github.com/
-  - [ ] https://www.npmjs.com/package/cld3-asm
+- [x] 某些 circle progress 不会消失
+  - [x] https://github.com/
+  - [x] https://www.npmjs.com/package/cld3-asm
+- [ ] 加载时间较长时, github.com 新 loading 出来的 DOM 不会被翻译
+- [ ] 有一些内容会被重复翻译: https://en.wikipedia.org/wiki/Engram_(neuropsychology), 这里面某个段落的 "来源请求" 会被翻译两次, 造成排版错误
 
 ### 中优先级
 

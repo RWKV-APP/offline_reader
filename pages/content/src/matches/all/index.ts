@@ -246,56 +246,34 @@ const handleNode = (_node: Node): boolean => {
     }
   }
 
-  if (notEmptyTextChildNodesCount <= 0) {
-    // if (childNodesLength == 7 && node.attributes.getNamedItem('icon')?.value === 'repo-forked') {
-    //   console.log(node);
-    //   console.log(childNodesNames);
-    //   console.log(node.childNodes);
-    //   console.log(childNodes.map(item => item.textContent?.trim()));
-    //   console.log('notEmptyTextChildNodesCount <= 0');
-    // }
-    return false;
-  }
+  if (notEmptyTextChildNodesCount <= 0) return false;
 
   // DEBUG 时标记
   node.style.outline = '1px solid rgba(255, 0, 0, 1.0)';
-  // node.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
 
   node.classList.add(targetClass);
   const breakLineHappened = checkBreakLineHappened(node);
-  let parentElementName = 'span';
-  if (breakLineHappened) {
-    parentElementName = 'div';
-  }
+  const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 
   const loadingSpinner = document.createElement('span');
   loadingSpinner.classList.add('ceb-loading-spinner');
   node.appendChild(loadingSpinner);
 
-  const parentElement = document.createElement(parentElementName);
+  const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
   queryWS({ source: textContent, logic: 'translate', url: currentUrl })
     .then(json => {
       const { translation, source } = json.body;
       if (translation && translation !== source) {
-        let inner = parentElementName ? ' ' + translation : translation;
-        inner = formatTranslation(inner);
-        parentElement.textContent = inner;
-        node.appendChild(parentElement);
+        let inner = formatTranslation(translation);
+        if (!breakLineHappened) inner = ' ' + inner;
+        nodeToBeAdded.textContent = inner;
+        node.appendChild(nodeToBeAdded);
         node.classList.add(translationDoneClass);
       }
     })
     .finally(() => {
       loadingSpinner.remove();
     });
-
-  // // DEBUG 时打印
-  // console.log({
-  //   textContent,
-  //   node,
-  //   childNodesLength,
-  //   childNodesNames,
-  //   textChildNodesCount: notEmptyTextChildNodesCount,
-  // });
 
   return true;
 };

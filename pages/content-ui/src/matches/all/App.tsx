@@ -37,11 +37,9 @@ const RWKVNotification: React.FC = () => {
         pointerEvents: 'none',
       }}
       onMouseEnter={e => {
-        console.log('onMouseEnter - 透明度变为 0.1');
         e.currentTarget.style.opacity = '0.1';
       }}
       onMouseLeave={e => {
-        console.log('onMouseLeave - 透明度恢复为 1');
         e.currentTarget.style.opacity = '1';
       }}>
       RWKV 离线翻译
@@ -124,23 +122,6 @@ export default function App() {
       navigator.clipboard.writeText(`${formatQueryText(text)}\n\n${translation}`);
     }
   }, [isRightShiftPressed, isLeftShiftPressed, text, translation]);
-
-  // useEffect(() => {
-  //   if (isRightShiftPressed && text) {
-  //     const timer = setInterval(async () => {
-  //       const sourceText = text;
-  //       if (sourceText.length > 3000) {
-  //         console.log('sourceText.length > 3000', sourceText.length);
-  //         return;
-  //       }
-  //       const data = await query({ text: sourceText, logic: 'loop' });
-  //       const { translation } = data;
-  //       setTranslation(formatTranslation(translation));
-  //     }, 50);
-  //     return () => clearInterval(timer);
-  //   }
-  //   return () => {};
-  // }, [isRightShiftPressed, text]);
 
   useEffect(() => {
     if (!isRightShiftPressed) {
