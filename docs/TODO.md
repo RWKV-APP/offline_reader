@@ -4,7 +4,7 @@
 
 ### 高优先级
 
-- [ ] Backend UI
+- [ ] Backend UI, 等待 @Dengzhi 的新 UI
 - [ ] Test on Windows
 - [ ] Bundle chrome extension files
 - [ ] 使用教程
@@ -42,16 +42,16 @@
 
 ### 高优先级
 
-- [ ] 有时候还有任务呢, 就自动停止了
+- [ ] 有时候还有任务呢, 就自动停止了, 在小尺寸模型上频繁复现
   - [ ] https://github.com/
+- [ ] 加载时间较长时, github.com 新 loading 出来的 DOM 不会被翻译
 - [x] 某些 circle progress 不会消失
   - [x] https://github.com/
   - [x] https://www.npmjs.com/package/cld3-asm
-- [ ] 加载时间较长时, github.com 新 loading 出来的 DOM 不会被翻译
-- [ ] 有一些内容会被重复翻译: https://en.wikipedia.org/wiki/Engram_(neuropsychology), 这里面某个段落的 "来源请求" 会被翻译两次, 造成排版错误
 
 ### 中优先级
 
+- [ ] 有一些内容会被重复翻译: https://en.wikipedia.org/wiki/Engram_(neuropsychology), 这里面某个段落的 "来源请求" 会被翻译两次, 造成排版错误, 可以通过 return false 来解决, return false 还能提高速度
 - [ ] Can not copy-paste: https://chatgpt.com/
 
 ## Report to Algorithm coleague
