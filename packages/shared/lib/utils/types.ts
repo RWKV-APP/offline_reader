@@ -9,7 +9,10 @@ export type ExcludeValuesFromBaseArrayType<B extends string[], E extends (string
 >[];
 export type ManifestType = chrome.runtime.ManifestV3;
 
-export interface ToBackend {
+/**
+ * 发送到后台环境的消息
+ */
+export interface ToBackground {
   func: 'query';
   body: {
     source: string;
@@ -18,7 +21,10 @@ export interface ToBackend {
   };
 }
 
-export interface FromBackend {
+/**
+ * 从后台环境返回的消息
+ */
+export interface FromBackground {
   func: 'query';
   body: {
     source: string;

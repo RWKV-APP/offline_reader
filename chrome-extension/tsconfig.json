@@ -6,5 +6,12 @@
       "@src/*": ["src/*"]
     }
   },
-  "include": ["src", "utils", "vite.config.mts", "manifest.ts", "../node_modules/@types"]
+  "include": [
+    "src",
+    "utils",
+    "vite.config.mts",
+    "manifest.ts"
+    // 如果不注释掉这行, vscode 会傻掉
+    // "../node_modules/@types"
+  ]
 }

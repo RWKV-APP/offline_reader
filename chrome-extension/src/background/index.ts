@@ -1,5 +1,5 @@
 import 'webextension-polyfill';
-import type { ToBackend, FromBackend } from '@extension/shared';
+import type { ToBackground, FromBackground } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -11,14 +11,12 @@ let ws: WebSocket | null = null;
 // 标志：是否正在连接
 let isConnecting = false;
 
-const waitingQuery: { [key: string]: { resolves: [(value: FromBackend) => void] } } = {};
-
-const allTabs = new Map<number, chrome.tabs.Tab>();
+const waitingQuery: { [key: string]: { resolves: [(value: FromBackground) => void] } } = {};
 
 const listenMessageForUI = (
-  message: ToBackend,
+  message: ToBackground,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: FromBackend) => void,
+  sendResponse: (response?: FromBackground) => void,
 ): boolean => {
   const { func, body } = message;
   const { source, logic, url } = body;
