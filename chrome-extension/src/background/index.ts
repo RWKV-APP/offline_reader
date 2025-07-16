@@ -1,11 +1,12 @@
 import 'webextension-polyfill';
+import { startListenTabs } from './tabs';
 import type { ToBackground, FromBackground } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
 
 const WS_PORT = 52346;
-const WS_URL = `ws://localhost:${WS_PORT}/ws`; // ← 改成你自己的地址
+const WS_URL = `ws://localhost:${WS_PORT}/ws`;
 let ws: WebSocket | null = null;
 
 // 标志：是否正在连接
@@ -80,35 +81,6 @@ const _onZoomChange = (zoomChangeInfo: chrome.tabs.ZoomChangeInfo) => {};
 
 const _onMoved = (tabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {};
 
-const startListenTabs = () => {
-  stopListenTabs();
-  chrome.tabs.onActivated.addListener(_onActivated);
-  chrome.tabs.onAttached.addListener(_onAttached);
-  chrome.tabs.onCreated.addListener(_onCreated);
-  chrome.tabs.onDetached.addListener(_onDetached);
-  chrome.tabs.onDetached.addListener(_onDetached);
-  chrome.tabs.onHighlighted.addListener(_onHighlighted);
-  // chrome.tabs.onMoved.addListener(_onMoved);
-  chrome.tabs.onRemoved.addListener(_onRemoved);
-  chrome.tabs.onReplaced.addListener(_onReplaced);
-  chrome.tabs.onUpdated.addListener(_onUpdated);
-  // chrome.tabs.onZoomChange.addListener(_onZoomChange);
-};
-
-const stopListenTabs = () => {
-  chrome.tabs.onActivated.removeListener(_onActivated);
-  chrome.tabs.onAttached.removeListener(_onAttached);
-  chrome.tabs.onCreated.removeListener(_onCreated);
-  chrome.tabs.onDetached.removeListener(_onDetached);
-  chrome.tabs.onDetached.removeListener(_onDetached);
-  chrome.tabs.onHighlighted.removeListener(_onHighlighted);
-  // chrome.tabs.onMoved.removeListener(_onMoved);
-  chrome.tabs.onRemoved.removeListener(_onRemoved);
-  chrome.tabs.onReplaced.removeListener(_onReplaced);
-  chrome.tabs.onUpdated.removeListener(_onUpdated);
-  // chrome.tabs.onZoomChange.removeListener(_onZoomChange);
-};
-
 const connectWebSocket = () => {
   if (isConnecting || (ws && ws.readyState === WebSocket.OPEN)) {
     return;
@@ -161,5 +133,8 @@ const connectWebSocket = () => {
 // 每秒调用一次 connectWebSocket
 setInterval(() => {
   connectWebSocket();
-  startListenTabs();
 }, 2000);
+
+startListenTabs();
+
+export { ws };
