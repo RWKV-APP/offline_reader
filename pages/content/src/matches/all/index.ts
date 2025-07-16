@@ -249,8 +249,9 @@ const handleNode = (_node: Node): boolean => {
   if (notEmptyTextChildNodesCount <= 0) return false;
 
   // DEBUG 时标记
-  node.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
-  node.style.outline = '1px solid rgba(255, 0, 0, 1.0)';
+  node.style.backgroundColor = 'rgba(0, 0, 255, 0.5)';
+  node.style.outline = '1px solid rgba(0, 0, 255, 1.0)';
+  node.style.color = 'rgba(255, 255, 255, 1.0)';
 
   node.classList.add(targetClass);
   const breakLineHappened = checkBreakLineHappened(node);
@@ -274,6 +275,7 @@ const handleNode = (_node: Node): boolean => {
         node.classList.add(translationDoneClass);
         nodeToBeAdded.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
         nodeToBeAdded.style.outline = '1px solid rgba(0, 255, 0, 1.0)';
+        nodeToBeAdded.style.color = 'rgba(255, 255, 255, 1.0)';
       }
     })
     .finally(() => {
