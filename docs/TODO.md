@@ -4,7 +4,7 @@
 
 ### 高优先级
 
-- [ ] Backend UI, 等待 @Dengzhi 的新 UI
+- [ ] Backend UI
 - [ ] Test on Windows
 - [ ] Bundle chrome extension files
 - [ ] 使用教程
@@ -42,12 +42,12 @@
 
 ### 高优先级
 
-- [ ] 有时候还有任务呢, 就自动停止了, 在小尺寸模型上频繁复现
-  - [ ] https://github.com/
 - [ ] 加载时间较长时, github.com 新 loading 出来的 DOM 不会被翻译
 - [x] 某些 circle progress 不会消失
   - [x] https://github.com/
   - [x] https://www.npmjs.com/package/cld3-asm
+- [x] 有时候还有任务呢, 就自动停止了, 在小尺寸模型上频繁复现
+  - [x] https://github.com/
 
 ### 中优先级
 
