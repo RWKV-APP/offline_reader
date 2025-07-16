@@ -249,6 +249,7 @@ const handleNode = (_node: Node): boolean => {
   if (notEmptyTextChildNodesCount <= 0) return false;
 
   // DEBUG 时标记
+  node.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
   node.style.outline = '1px solid rgba(255, 0, 0, 1.0)';
 
   node.classList.add(targetClass);
@@ -262,6 +263,8 @@ const handleNode = (_node: Node): boolean => {
   const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
   queryWS({ source: textContent, logic: 'translate', url: currentUrl })
     .then(json => {
+      if (node.classList.contains(translationDoneClass)) return;
+
       const { translation, source } = json.body;
       if (translation && translation !== source) {
         let inner = formatTranslation(translation);
@@ -269,6 +272,8 @@ const handleNode = (_node: Node): boolean => {
         nodeToBeAdded.textContent = inner;
         node.appendChild(nodeToBeAdded);
         node.classList.add(translationDoneClass);
+        nodeToBeAdded.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
+        nodeToBeAdded.style.outline = '1px solid rgba(0, 255, 0, 1.0)';
       }
     })
     .finally(() => {
