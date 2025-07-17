@@ -15,14 +15,34 @@
 
 ## 我的主要工作代码包含
 
-- pages/content
-  - 检测 DOM 中需要被翻译的文本, 发送翻译请求给 background
-  - 将翻译结果通过修改 DOM 的方式, 渲染到页面上
-- chrome-extension/src/background/index.ts
-  - 持久化状态
-  - 监听 tab changes
-  - 链接 Websocket 服务器
-- pages/content-ui
-  - 渲染用户交互
-  - 讲翻译结果绘制到页面的最上册
+### 修改页面 DOM 的代码
+
+path: pages/content
+
+#### 功能
+
+- 检测 DOM 中需要被翻译的文本, 发送翻译请求给 background
+- 将翻译结果通过修改 DOM 的方式, 渲染到页面上
+
+### 后台代码
+
+path: chrome-extension/src/background
+
+#### 功能
+
+- 持久化状态
+- 监听 tab changes
+- 链接 Websocket 服务器
+
+### 用户交互代码
+
+path: pages/content-ui
+
+#### 功能
+
+- 渲染用户交互
+- 讲翻译结果绘制到页面的最上册
+
+### 共享代码
+
 - packages/shared

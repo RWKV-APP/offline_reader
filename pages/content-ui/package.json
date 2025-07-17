@@ -21,10 +21,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@extension/env": "workspace:*",
+    "@extension/i18n": "workspace:*",
     "@extension/shared": "workspace:*",
     "@extension/ui": "workspace:*",
-    "@extension/i18n": "workspace:*",
-    "@extension/env": "workspace:*"
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@extension/hmr": "workspace:*",
