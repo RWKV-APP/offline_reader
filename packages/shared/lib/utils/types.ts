@@ -37,6 +37,7 @@ export interface SetState {
   func: 'SetState';
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
+  inspecting: boolean;
 }
 
 export interface OnStateChanged extends State {

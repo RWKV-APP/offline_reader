@@ -6,8 +6,8 @@
 
 ## Code Style
 
-- 必须遵守 eslint.config.ts 中的要求
-- 当构建 func 时, 必须使用 expression (const func = () => {}) 而非 declaration (function func() {})
+- 当构建 func 时, 必须使用 const func = () => {}
+  - 优先使用 async / await 而非 callback / then
 
 ## workflow
 

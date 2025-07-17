@@ -33,14 +33,12 @@ const state: State = {
   inspecting: false,
 };
 
-const syncStateToContent = () => {
-  console.log('background.syncStateToContent', state);
-  chrome.tabs.query({}).then(tabs => {
-    tabs.forEach(tab => {
-      if (tab.id) {
-        chrome.tabs.sendMessage(tab.id, { func: 'OnStateChanged', ...state });
-      }
-    });
+const syncStateToContent = async () => {
+  const tabs = await chrome.tabs.query({});
+  tabs.forEach(tab => {
+    if (tab.id) {
+      chrome.tabs.sendMessage(tab.id, { func: 'OnStateChanged', ...state });
+    }
   });
 };
 
@@ -49,43 +47,49 @@ const listenMessageForUI = (
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: AllMessage) => void,
 ): boolean => {
-  const { func } = message;
+  try {
+    const { func } = message;
 
-  switch (func) {
-    case 'QueryRequest': {
-      const { source, logic, url } = message.body;
-      const tabId = sender.tab?.id;
-      const v = waitingQuery[source];
-      if (v === undefined) {
-        waitingQuery[source] = { resolves: [sendResponse] };
-      } else {
-        if (v.resolves == undefined || v.resolves == null) {
-          v.resolves = [sendResponse];
+    switch (func) {
+      case 'QueryRequest': {
+        const { source, logic, url } = message.body;
+        const tabId = sender.tab?.id;
+        const v = waitingQuery[source];
+        if (v === undefined) {
+          waitingQuery[source] = { resolves: [sendResponse] };
         } else {
-          v.resolves.push(sendResponse);
+          if (v.resolves == undefined || v.resolves == null) {
+            v.resolves = [sendResponse];
+          } else {
+            v.resolves.push(sendResponse);
+          }
         }
+        ws?.send(JSON.stringify({ source, logic, url, tabId }));
+        return true;
       }
-      ws?.send(JSON.stringify({ source, logic, url, tabId }));
-      return true;
+      case 'GetState': {
+        console.log('Background.Send: GetStateResponse', state);
+        sendResponse({
+          func: 'GetStateResponse',
+          ...state,
+        });
+        syncStateToContent();
+        return true;
+      }
+      case 'SetState': {
+        const { interactionMode, demoMode, inspecting } = message;
+        state.interactionMode = interactionMode;
+        state.demoMode = demoMode;
+        state.inspecting = inspecting;
+        syncStateToContent();
+        return false;
+      }
     }
-    case 'GetState': {
-      console.log('Background.Send: GetStateResponse', state);
-      sendResponse({
-        func: 'GetStateResponse',
-        ...state,
-      });
-      syncStateToContent();
-      return true;
-    }
-    case 'SetState': {
-      const { interactionMode, demoMode } = message;
-      state.interactionMode = interactionMode;
-      state.demoMode = demoMode;
-      syncStateToContent();
-      return true;
-    }
+    return false;
+  } catch (e) {
+    console.error('❌ 处理消息失败:', e);
+    return false;
   }
-  return false;
 };
 
 const startListenMessage = () => {
