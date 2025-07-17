@@ -22,7 +22,7 @@ export interface QueryRequest {
 }
 
 /**
- * 从后台环境返回的消息
+ * 从 background 返回的翻译结果
  */
 export interface QueryResponse {
   func: 'QueryResponse';
@@ -52,7 +52,7 @@ export interface GetState {
 }
 
 export interface GetStateResponse {
-  func: 'getState';
+  func: 'GetStateResponse';
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   ignored: boolean;
