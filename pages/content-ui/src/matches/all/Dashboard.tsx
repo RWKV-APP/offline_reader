@@ -14,8 +14,7 @@ const StatusItem: React.FC<{ icon: React.ReactNode; title: string; value: string
   const style: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 245, 245, 0.85)',
-    backdropFilter: 'blur(8px)',
+    backgroundColor: 'transparent',
   };
 
   if (onClick) {
@@ -56,6 +55,18 @@ export const Dashboard: React.FC = () => {
   const [demoMode, setDemoMode] = useState(false);
 
   const [diagnoseMode, setDiagnoseMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDarkMode(e.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
 
   useEffect(() => {
     const handleRunningUpdate = (event: CustomEvent) => {
@@ -122,25 +133,38 @@ export const Dashboard: React.FC = () => {
     chrome.runtime.sendMessage(msg);
   };
 
+  const dashboardStyle: React.CSSProperties = {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    top: 0,
+    width: 180,
+    zIndex: 2147483647,
+    pointerEvents: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    padding: '20px',
+    gap: '20px',
+    backdropFilter: 'blur(8px)',
+    ...(isDarkMode
+      ? {
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+          color: '#fff',
+          textShadow: '0 0 2px black',
+        }
+      : {
+          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+          borderRight: '1px solid rgba(0, 0, 0, 0.08)',
+          color: '#111',
+          textShadow: '0 0 2px white',
+        }),
+  };
+
   return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        top: 0,
-        width: 180,
-        zIndex: 2147483647,
-        pointerEvents: 'none',
-        borderRight: '1px solid rgba(0, 0, 0, 0.08)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: '20px',
-        gap: '20px',
-        color: '#111',
-      }}>
+    <div style={dashboardStyle}>
       <StatusItem
         icon={running ? <FaPlay /> : <FaStop />}
         title="RWKV 运行状态"

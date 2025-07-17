@@ -37,7 +37,11 @@ const syncStateToContent = async () => {
   const tabs = await chrome.tabs.query({});
   tabs.forEach(tab => {
     if (tab.id) {
-      chrome.tabs.sendMessage(tab.id, { func: 'OnStateChanged', ...state });
+      try {
+        chrome.tabs.sendMessage(tab.id, { func: 'OnStateChanged', ...state });
+      } catch (e) {
+        console.warn('background.syncStateToContent', e);
+      }
     }
   });
 };
