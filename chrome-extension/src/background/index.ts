@@ -1,10 +1,19 @@
 import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
 import { ignoreHref } from '@extension/shared';
+import { exampleThemeStorage, translationModeStorage } from '@extension/storage';
 import type { AllMessage, QueryResponse, State } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
+
+exampleThemeStorage.get().then(theme => {
+  console.log('theme', theme);
+});
+
+translationModeStorage.get().then(mode => {
+  console.log('mode', mode);
+});
 
 const WS_PORT = 52346;
 const WS_URL = `ws://localhost:${WS_PORT}/ws`;

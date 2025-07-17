@@ -7,8 +7,10 @@ import {
   targetClass,
   translationDoneClass,
 } from '@extension/shared';
+import { translationModeStorage } from '@extension/storage';
 import { sampleFunction } from '@src/sample-function';
 import type { State } from '@extension/shared';
+import type { TranslationMode } from '@extension/storage/lib/base/enums';
 
 console.log('[CEB] All content script loaded');
 
@@ -304,6 +306,18 @@ const handleNode = (_node: Node): boolean => {
     });
 
   return true;
+};
+
+/**
+ * 处理翻译模式变更
+ * @param mode 翻译模式 - 可选值:
+ * - TranslationMode.Immersive - 沉浸式
+ * - TranslationMode.Hover - 悬浮式
+ * - TranslationMode.Special - 特殊式 - 这个或许作为展会时的模式
+ * - TranslationMode.None - 不翻译
+ */
+const handleTranslationModeChange = (mode: TranslationMode) => {
+  void translationModeStorage.setMode(mode);
 };
 
 const observer = new MutationObserver(mutationsList => {

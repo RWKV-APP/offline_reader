@@ -1,3 +1,4 @@
+import type { TranslationMode } from './enums.js';
 import type { StorageEnum } from './index.js';
 
 export type ValueOrUpdateType<D> = D | ((prev: D) => Promise<D> | D);
@@ -51,4 +52,16 @@ export interface ThemeStateType {
 
 export type ThemeStorageType = BaseStorageType<ThemeStateType> & {
   toggle: () => Promise<void>;
+};
+
+export interface TranslationModeStateType {
+  enabled: boolean;
+  mode: TranslationMode;
+  targetLanguage: string;
+}
+
+export type TranslationModeStorageType = BaseStorageType<TranslationModeStateType> & {
+  toggle: () => Promise<void>;
+  setMode: (mode: TranslationMode) => Promise<void>;
+  setTargetLanguage: (language: string) => Promise<void>;
 };

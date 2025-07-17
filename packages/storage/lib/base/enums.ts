@@ -40,3 +40,25 @@ export enum SessionAccessLevelEnum {
    */
   ExtensionPagesAndContentScripts = 'TRUSTED_AND_UNTRUSTED_CONTEXTS',
 }
+
+/**
+ * Translation mode types for the extension.
+ */
+export enum TranslationMode {
+  /**
+   * Immersive translation mode - 沉浸式
+   */
+  Immersive = 'immersive',
+  /**
+   * Hover translation mode - 悬浮式
+   */
+  Hover = 'hover',
+  /**
+   * Special translation mode - 特殊式
+   */
+  Special = 'special',
+  /**
+   * No translation - 不翻译
+   */
+  None = 'none',
+}
