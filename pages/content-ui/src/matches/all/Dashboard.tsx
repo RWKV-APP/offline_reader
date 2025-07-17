@@ -11,10 +11,36 @@ const StatusItem: React.FC<{ icon: React.ReactNode; title: string; value: string
   value,
   onClick,
 }) => {
+  const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsDarkMode(e.matches);
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
   const style: React.CSSProperties = {
     display: 'flex',
     alignItems: 'center',
-    backgroundColor: 'transparent',
+    backdropFilter: 'blur(8px)',
+    borderRadius: '8px',
+    padding: '2px 4px',
+    ...(isDarkMode
+      ? {
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          border: '1px solid rgba(255, 255, 255, 0.5)',
+          color: '#fff',
+        }
+      : {
+          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+          border: '1px solid rgba(0, 0, 0, 0.5)',
+          color: '#111',
+        }),
   };
 
   if (onClick) {
@@ -54,19 +80,7 @@ export const Dashboard: React.FC = () => {
   // 演示模式
   const [demoMode, setDemoMode] = useState(false);
 
-  const [diagnoseMode, setDiagnoseMode] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
+  const [inspecting, setInspecting] = useState(false);
 
   useEffect(() => {
     const handleRunningUpdate = (event: CustomEvent) => {
@@ -74,7 +88,7 @@ export const Dashboard: React.FC = () => {
       setIgnored(ignoreHref.some(href => window.location.href.startsWith(href)));
       setInteractionMode(event.detail.interactionMode);
       setDemoMode(event.detail.demoMode);
-      setDiagnoseMode(event.detail.diagnoseMode);
+      setInspecting(event.detail.inspecting);
     };
 
     document.addEventListener('state-changed', handleRunningUpdate as EventListener);
@@ -118,7 +132,7 @@ export const Dashboard: React.FC = () => {
       func: 'SetState',
       interactionMode: interactionMode ?? 'hover',
       demoMode: demoMode,
-      inspecting: false,
+      inspecting: !inspecting,
     };
     chrome.runtime.sendMessage(msg);
   };
@@ -145,22 +159,8 @@ export const Dashboard: React.FC = () => {
     flexDirection: 'column',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    padding: '20px',
-    gap: '20px',
-    backdropFilter: 'blur(8px)',
-    ...(isDarkMode
-      ? {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-          color: '#fff',
-          textShadow: '0 0 2px black',
-        }
-      : {
-          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-          borderRight: '1px solid rgba(0, 0, 0, 0.08)',
-          color: '#111',
-          textShadow: '0 0 2px white',
-        }),
+    padding: '20px 20px 20px 4px',
+    gap: '4px',
   };
 
   return (
@@ -174,11 +174,18 @@ export const Dashboard: React.FC = () => {
       <StatusItem
         icon={getInteractionModeIcon()}
         title="交互模式"
-        value={interactionMode ?? 'None'}
+        // value={interactionMode ?? 'None'}
+        value={'未实现'}
         onClick={toggleInteractionMode}
       />
-      <StatusItem icon={<FaDesktop />} title="演示模式" value={demoMode ? '是' : '否'} onClick={toggleDemoMode} />
-      <StatusItem icon={<FaBug />} title="诊断模式" value={diagnoseMode ? '是' : '否'} onClick={toggleDiagnoseMode} />
+      <StatusItem
+        icon={<FaDesktop />}
+        title="演示模式"
+        // value={demoMode ? '是' : '否'}
+        value={'未实现'}
+        onClick={toggleDemoMode}
+      />
+      <StatusItem icon={<FaBug />} title="诊断模式" value={inspecting ? '是' : '否'} onClick={toggleDiagnoseMode} />
     </div>
   );
 };
