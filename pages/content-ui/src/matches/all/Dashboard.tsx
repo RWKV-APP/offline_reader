@@ -1,16 +1,22 @@
 import { ignoreHref } from '@extension/shared';
 import { useState, useEffect } from 'react';
-import { FaPlay, FaStop, FaEye, FaEyeSlash, FaMousePointer, FaExpand, FaBan, FaDesktop } from 'react-icons/fa';
+import { FaPlay, FaStop, FaEye, FaEyeSlash, FaMousePointer, FaExpand, FaBan, FaDesktop, FaBug } from 'react-icons/fa';
 import type React from 'react';
 
 // --- Status Item Component ---
 const StatusItem: React.FC<{ icon: React.ReactNode; title: string; value: string }> = ({ icon, title, value }) => (
-  <div style={{ display: 'flex', alignItems: 'center' }}>
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      backgroundColor: 'rgba(245, 245, 245, 0.85)',
+      backdropFilter: 'blur(8px)',
+    }}>
     <div
       style={{
         width: '24px',
         height: '24px',
-        marginRight: '12px',
+        marginRight: '2px',
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
@@ -35,12 +41,15 @@ export const Dashboard: React.FC = () => {
   // 演示模式
   const [demoMode, setDemoMode] = useState(false);
 
+  const [diagnoseMode, setDiagnoseMode] = useState(false);
+
   useEffect(() => {
     const handleRunningUpdate = (event: CustomEvent) => {
       setRunning(event.detail.running);
       setIgnored(ignoreHref.some(href => window.location.href.startsWith(href)));
       setInteractionMode(event.detail.interactionMode);
       setDemoMode(event.detail.demoMode);
+      setDiagnoseMode(event.detail.diagnoseMode);
     };
 
     document.addEventListener('state-changed', handleRunningUpdate as EventListener);
@@ -75,8 +84,6 @@ export const Dashboard: React.FC = () => {
         width: 180,
         zIndex: 2147483647,
         pointerEvents: 'none',
-        backgroundColor: 'rgba(245, 245, 245, 0.85)',
-        backdropFilter: 'blur(8px)',
         borderRight: '1px solid rgba(0, 0, 0, 0.08)',
         display: 'flex',
         flexDirection: 'column',
@@ -86,10 +93,15 @@ export const Dashboard: React.FC = () => {
         gap: '20px',
         color: '#111',
       }}>
-      <StatusItem icon={running ? <FaPlay /> : <FaStop />} title="Running" value={running ? 'Active' : 'Inactive'} />
-      <StatusItem icon={ignored ? <FaEyeSlash /> : <FaEye />} title="Ignored Page" value={ignored ? 'Yes' : 'No'} />
-      <StatusItem icon={getInteractionModeIcon()} title="Interaction" value={interactionMode ?? 'None'} />
-      <StatusItem icon={<FaDesktop />} title="Demo Mode" value={demoMode ? 'On' : 'Off'} />
+      <StatusItem
+        icon={running ? <FaPlay /> : <FaStop />}
+        title="RWKV 运行状态"
+        value={running ? '运行中' : '未运行'}
+      />
+      <StatusItem icon={ignored ? <FaEyeSlash /> : <FaEye />} title="页面被忽略了" value={ignored ? '是' : '否'} />
+      <StatusItem icon={getInteractionModeIcon()} title="交互模式" value={interactionMode ?? 'None'} />
+      <StatusItem icon={<FaDesktop />} title="演示模式" value={demoMode ? '是' : '否'} />
+      <StatusItem icon={<FaBug />} title="诊断模式" value={diagnoseMode ? '是' : '否'} />
     </div>
   );
 };
