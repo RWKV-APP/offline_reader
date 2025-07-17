@@ -8,10 +8,30 @@ import {
   translationDoneClass,
 } from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
+import type { State } from '@extension/shared';
 
 console.log('[CEB] All content script loaded');
 
 void sampleFunction();
+
+const state: State = {
+  interactionMode: 'full',
+  demoMode: false,
+  ignored: false,
+  running: false,
+  ignoreHref,
+};
+
+const handleStateChanged = (event: CustomEvent) => {
+  const { interactionMode, demoMode, ignored, running } = event.detail;
+  state.interactionMode = interactionMode;
+  state.demoMode = demoMode;
+  state.ignored = ignored;
+  state.running = running;
+  console.log('state-changed: content', state);
+};
+
+document.addEventListener('state-changed', handleStateChanged as EventListener);
 
 const handleMouseOver = (event: MouseEvent) => {
   const target = event.target as HTMLElement;

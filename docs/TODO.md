@@ -4,34 +4,18 @@
 
 ### 高优先级
 
-- [ ] 状态同步
 - [ ] Bundle chrome extension files
 - [ ] 使用教程
 - [ ] 移除红框
 - [ ] 确保转圈会消失
   - [ ] 如果没有运行, 就移除所有转圈
 - [ ] 演示模式
+- [x] 状态同步
 - [x] Test on Windows
 - [x] Backend UI
 
 ### 中优先级
 
-- [ ] 不在某些 URL 上执行:
-  - jd
-  - taobao
-  - bilibili
-  - douyin
-  - kuaishou
-  - xhs
-  - weibo
-  - weixin
-  - qq
-  - 163
-  - chat.deepseek.com
-  - chatgpt.com
-  - claude.ai
-  - kimi.com
-  - deepseek.com
 - [ ] 优先翻译 main 标签, See: [通常有哪些情况表明某些内容是网页的主要元素?](https://chatgpt.com/share/68740231-3100-8004-973e-b850038a27b7)
 - [ ] Store things in frontend
 - [ ] 使用最新权重
@@ -41,6 +25,7 @@
 - [ ] 不翻译已经关闭的标签
 - [ ] 渲染 frontend 在线状态
 - [ ] 根据 backend 在线状态决定是否启用翻译
+- [x] 不在某些 URL 上执行:
 
 ### 低优先级
 

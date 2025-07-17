@@ -1,6 +1,7 @@
 import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
-import type { AllMessage, QueryRequest, QueryResponse } from '@extension/shared';
+import { ignoreHref } from '@extension/shared';
+import type { AllMessage, QueryResponse, State } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -12,12 +13,32 @@ let ws: WebSocket | null = null;
 // 标志：是否正在连接
 let isConnecting = false;
 
-const waitingQuery: { [key: string]: { resolves: [(value: QueryResponse) => void] } } = {};
+const waitingQuery: { [key: string]: { resolves: [(value: AllMessage) => void] } } = {};
+
+const state: State = {
+  interactionMode: 'full',
+  demoMode: false,
+  ignored: false,
+  running: false,
+  ignoreHref,
+};
+
+const syncStateToContent = () => {
+  console.log('syncStateToContent', state);
+  chrome.tabs.query({}).then(tabs => {
+    tabs.forEach(tab => {
+      if (tab.id) {
+        console.log('sendMessage', tab.id, state);
+        chrome.tabs.sendMessage(tab.id, { func: 'OnStateChanged', ...state });
+      }
+    });
+  });
+};
 
 const listenMessageForUI = (
   message: AllMessage,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: QueryResponse) => void,
+  sendResponse: (response?: AllMessage) => void,
 ): boolean => {
   const { func } = message;
 
@@ -38,13 +59,20 @@ const listenMessageForUI = (
       ws?.send(JSON.stringify({ source, logic, url, tabId }));
       return true;
     }
-    case 'QueryResponse': {
+    case 'GetState': {
+      console.log('Background.Send: GetStateResponse', state);
+      sendResponse({
+        func: 'GetStateResponse',
+        ...state,
+      });
+      syncStateToContent();
       return true;
     }
-    case 'setState': {
-      return true;
-    }
-    case 'onStateChanged': {
+    case 'SetState': {
+      const { interactionMode, demoMode } = message;
+      state.interactionMode = interactionMode;
+      state.demoMode = demoMode;
+      syncStateToContent();
       return true;
     }
   }
@@ -76,6 +104,8 @@ const connectWebSocket = () => {
       console.log('✅ WebSocket 已连接');
       isConnecting = false;
       ws?.send(JSON.stringify({ type: 'ping' }));
+      state.running = true;
+      syncStateToContent();
     };
 
     ws.onmessage = event => {
@@ -94,12 +124,16 @@ const connectWebSocket = () => {
     ws.onerror = err => {
       console.error('❌ WebSocket 错误:', err);
       ws?.close(); // 主动触发 onclose
+      state.running = false;
+      syncStateToContent();
     };
 
     ws.onclose = () => {
       console.warn('⚠️ WebSocket 已关闭');
       isConnecting = false;
       ws = null;
+      state.running = false;
+      syncStateToContent();
     };
 
     success = true;
@@ -107,6 +141,8 @@ const connectWebSocket = () => {
     console.error('❌ 创建 WebSocket 失败:', e);
     isConnecting = false;
     success = false;
+    state.running = false;
+    syncStateToContent();
   }
 
   if (!success) return;

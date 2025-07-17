@@ -34,29 +34,29 @@ export interface QueryResponse {
 }
 
 export interface SetState {
-  func: 'setState';
+  func: 'SetState';
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
 }
 
-export interface OnStateChanged {
-  func: 'onStateChanged';
-  interactionMode: 'hover' | 'full';
-  demoMode: boolean;
-  ignored: boolean;
-  running: boolean;
+export interface OnStateChanged extends State {
+  func: 'OnStateChanged';
 }
 
 export interface GetState {
-  func: 'getState';
+  func: 'GetState';
 }
 
-export interface GetStateResponse {
+export interface GetStateResponse extends State {
   func: 'GetStateResponse';
+}
+
+export type AllMessage = QueryRequest | QueryResponse | SetState | OnStateChanged | GetState | GetStateResponse;
+
+export interface State {
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   ignored: boolean;
   running: boolean;
+  ignoreHref: string[];
 }
-
-export type AllMessage = QueryRequest | QueryResponse | SetState | OnStateChanged | GetState | GetStateResponse;

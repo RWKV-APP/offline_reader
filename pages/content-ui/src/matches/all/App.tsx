@@ -58,6 +58,25 @@ const Dashboard: React.FC = () => {
   // 演示模式
   const [demoMode, setDemoMode] = useState(false);
 
+  useEffect(() => {
+    const handleRunningUpdate = (event: CustomEvent) => {
+      setRunning(event.detail.running);
+      setIgnored(ignoreHref.some(href => window.location.href.startsWith(href)));
+      setInteractionMode(event.detail.interactionMode);
+      setDemoMode(event.detail.demoMode);
+    };
+
+    document.addEventListener('state-changed', handleRunningUpdate as EventListener);
+
+    return () => {
+      document.removeEventListener('state-changed', handleRunningUpdate as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    chrome.runtime.sendMessage({ func: 'GetState' });
+  }, []);
+
   return (
     <div
       style={{
