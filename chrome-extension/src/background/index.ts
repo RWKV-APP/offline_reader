@@ -24,11 +24,10 @@ const state: State = {
 };
 
 const syncStateToContent = () => {
-  console.log('syncStateToContent', state);
+  console.log('background.syncStateToContent', state);
   chrome.tabs.query({}).then(tabs => {
     tabs.forEach(tab => {
       if (tab.id) {
-        console.log('sendMessage', tab.id, state);
         chrome.tabs.sendMessage(tab.id, { func: 'OnStateChanged', ...state });
       }
     });
