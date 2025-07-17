@@ -1,6 +1,6 @@
-import { formatQueryText, formatTranslation, ignoreHref, queryWS } from '@extension/shared';
+import { Dashboard } from './Dashboard';
+import { formatQueryText } from '@extension/shared';
 import { useEffect, useState } from 'react';
-import type React from 'react';
 
 // Define the shape of the highlighter's style state
 interface HighlighterStyle {
@@ -10,111 +10,6 @@ interface HighlighterStyle {
   width: number;
   height: number;
 }
-
-const RWKVNotification: React.FC = () => {
-  const currentHref = window.location.href;
-  for (const href of ignoreHref) {
-    if (currentHref.startsWith(href)) return null;
-  }
-
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        top: 'auto',
-        left: 32,
-        bottom: 32,
-        width: 'auto',
-        height: 'auto',
-        fontSize: '4rem',
-        lineHeight: 1,
-        backgroundColor: 'rgba(0, 0, 0, 1)',
-        padding: '0.5rem',
-        transition: 'opacity 0.3s ease-in-out',
-        cursor: 'pointer',
-        zIndex: 2147483647, // 确保在最顶层
-        color: 'white', // 确保文字可见
-        pointerEvents: 'none',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.opacity = '0.1';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.opacity = '1';
-      }}>
-      RWKV 离线翻译
-      <div style={{ fontSize: '2rem', lineHeight: 1 }}>无需联网即可使用 AI 进行翻译任务</div>
-    </div>
-  );
-};
-
-const Dashboard: React.FC = () => {
-  // 是否运行中, websocket 是否处于链接状态?
-  const [running, setRunning] = useState(false);
-  // 页面是否被忽略
-  const [ignored, setIgnored] = useState(false);
-  // 页面交互模式
-  const [interactionMode, setInteractionMode] = useState<'hover' | 'full' | null>(null);
-  // 演示模式
-  const [demoMode, setDemoMode] = useState(false);
-
-  useEffect(() => {
-    const handleRunningUpdate = (event: CustomEvent) => {
-      setRunning(event.detail.running);
-      setIgnored(ignoreHref.some(href => window.location.href.startsWith(href)));
-      setInteractionMode(event.detail.interactionMode);
-      setDemoMode(event.detail.demoMode);
-    };
-
-    document.addEventListener('state-changed', handleRunningUpdate as EventListener);
-
-    return () => {
-      document.removeEventListener('state-changed', handleRunningUpdate as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    chrome.runtime.sendMessage({ func: 'GetState' });
-  }, []);
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        bottom: 0,
-        right: 200,
-        top: 0,
-        width: 200,
-        zIndex: 2147483647,
-        pointerEvents: 'none',
-        backgroundColor: 'rgba(255, 0, 0, 0.5)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '1.5rem',
-        lineHeight: 1,
-      }}>
-      <div style={{ fontSize: '2rem' }}>Running</div>
-      <div>{running ? 'Yes' : 'No'}</div>
-
-      <div style={{ height: 12 }} />
-
-      <div style={{ fontSize: '2rem' }}>Ignored</div>
-      <div>{ignored ? 'Yes' : 'No'}</div>
-
-      <div style={{ height: 12 }} />
-
-      <div style={{ fontSize: '2rem' }}>Interaction Mode</div>
-      <div>{interactionMode ?? 'None'}</div>
-
-      <div style={{ height: 12 }} />
-
-      <div style={{ fontSize: '2rem' }}>演示模式</div>
-      <div>{demoMode ? 'Yes' : 'No'}</div>
-    </div>
-  );
-};
 
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
