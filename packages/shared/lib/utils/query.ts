@@ -1,4 +1,4 @@
-import type { ToBackground, FromBackground } from './types.js';
+import type { QueryRequest, QueryResponse } from './types.js';
 
 export const formatQueryText = (text: string) => {
   // 统一处理所有方括号引用格式：
@@ -29,11 +29,11 @@ export const formatTranslation = (translation: string) => {
   return addSpaceBetweenChineseAndEnglish(translation.replace(regex, '').replace(regex2, '').trim());
 };
 
-export const queryWS = async (body: ToBackground['body']): Promise<FromBackground> => {
-  const msgBody: ToBackground = {
-    func: 'query',
+export const queryWS = async (body: QueryRequest['body']): Promise<QueryResponse> => {
+  const msgBody: QueryRequest = {
+    func: 'QueryRequest',
     body,
   };
-  const res = await chrome.runtime.sendMessage<ToBackground, FromBackground>(msgBody);
+  const res = await chrome.runtime.sendMessage<QueryRequest, QueryResponse>(msgBody);
   return res;
 };

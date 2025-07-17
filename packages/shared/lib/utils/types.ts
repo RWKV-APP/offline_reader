@@ -12,8 +12,8 @@ export type ManifestType = chrome.runtime.ManifestV3;
 /**
  * 发送到后台环境的消息
  */
-export interface ToBackground {
-  func: 'query';
+export interface QueryRequest {
+  func: 'QueryRequest';
   body: {
     source: string;
     logic: 'translate' | 'loop';
@@ -24,11 +24,39 @@ export interface ToBackground {
 /**
  * 从后台环境返回的消息
  */
-export interface FromBackground {
-  func: 'query';
+export interface QueryResponse {
+  func: 'QueryResponse';
   body: {
     source: string;
     translation: string;
     url: string;
   };
 }
+
+export interface SetState {
+  func: 'setState';
+  interactionMode: 'hover' | 'full';
+  demoMode: boolean;
+}
+
+export interface OnStateChanged {
+  func: 'onStateChanged';
+  interactionMode: 'hover' | 'full';
+  demoMode: boolean;
+  ignored: boolean;
+  running: boolean;
+}
+
+export interface GetState {
+  func: 'getState';
+}
+
+export interface GetStateResponse {
+  func: 'getState';
+  interactionMode: 'hover' | 'full';
+  demoMode: boolean;
+  ignored: boolean;
+  running: boolean;
+}
+
+export type AllMessage = QueryRequest | QueryResponse | SetState | OnStateChanged | GetState | GetStateResponse;

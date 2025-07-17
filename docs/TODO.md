@@ -16,6 +16,22 @@
 
 ### 中优先级
 
+- [ ] 不在某些 URL 上执行:
+  - jd
+  - taobao
+  - bilibili
+  - douyin
+  - kuaishou
+  - xhs
+  - weibo
+  - weixin
+  - qq
+  - 163
+  - chat.deepseek.com
+  - chatgpt.com
+  - claude.ai
+  - kimi.com
+  - deepseek.com
 - [ ] 优先翻译 main 标签, See: [通常有哪些情况表明某些内容是网页的主要元素?](https://chatgpt.com/share/68740231-3100-8004-973e-b850038a27b7)
 - [ ] Store things in frontend
 - [ ] 使用最新权重
@@ -45,6 +61,7 @@
 
 ### 高优先级
 
+- [ ] 哔哩哔哩的 header 没了
 - [ ] 加载时间较长时, github.com 新 loading 出来的 DOM 不会被翻译
 - [x] 某些 circle progress 不会消失
   - [x] https://github.com/

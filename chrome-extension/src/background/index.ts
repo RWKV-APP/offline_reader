@@ -1,6 +1,6 @@
 import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
-import type { ToBackground, FromBackground } from '@extension/shared';
+import type { AllMessage, QueryRequest, QueryResponse } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -12,28 +12,41 @@ let ws: WebSocket | null = null;
 // 标志：是否正在连接
 let isConnecting = false;
 
-const waitingQuery: { [key: string]: { resolves: [(value: FromBackground) => void] } } = {};
+const waitingQuery: { [key: string]: { resolves: [(value: QueryResponse) => void] } } = {};
 
 const listenMessageForUI = (
-  message: ToBackground,
+  message: AllMessage,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: FromBackground) => void,
+  sendResponse: (response?: QueryResponse) => void,
 ): boolean => {
-  const { func, body } = message;
-  const { source, logic, url } = body;
-  if (func === 'query') {
-    const v = waitingQuery[source];
-    if (v === undefined) {
-      waitingQuery[source] = { resolves: [sendResponse] };
-    } else {
-      if (v.resolves == undefined || v.resolves == null) {
-        v.resolves = [sendResponse];
+  const { func } = message;
+
+  switch (func) {
+    case 'QueryRequest': {
+      const { source, logic, url } = message.body;
+      const tabId = sender.tab?.id;
+      const v = waitingQuery[source];
+      if (v === undefined) {
+        waitingQuery[source] = { resolves: [sendResponse] };
       } else {
-        v.resolves.push(sendResponse);
+        if (v.resolves == undefined || v.resolves == null) {
+          v.resolves = [sendResponse];
+        } else {
+          v.resolves.push(sendResponse);
+        }
       }
+      ws?.send(JSON.stringify({ source, logic, url, tabId }));
+      return true;
     }
-    ws?.send(JSON.stringify({ source, logic, url }));
-    return true;
+    case 'QueryResponse': {
+      return true;
+    }
+    case 'setState': {
+      return true;
+    }
+    case 'onStateChanged': {
+      return true;
+    }
   }
   return false;
 };
@@ -46,40 +59,6 @@ const startListenMessage = () => {
 const stopListenMessage = () => {
   chrome.runtime.onMessage.removeListener(listenMessageForUI);
 };
-
-const _onUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {};
-
-const _onRemoved = (tabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {};
-
-const _onCreated = (tab: chrome.tabs.Tab) => {};
-
-const _onActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
-  chrome.tabs.get(activeInfo.tabId).then(tab => {
-    const url = tab?.url;
-    if (url) {
-      ws?.send(JSON.stringify({ logic: 'url_highlighted', url }));
-    }
-  });
-};
-
-const _onReplaced = (addedTabId: number, removedTabId: number) => {};
-
-const _onAttached = (tabId: number, attachInfo: chrome.tabs.TabAttachInfo) => {};
-
-const _onDetached = (tabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {};
-
-const _onHighlighted = (highlightInfo: chrome.tabs.TabHighlightInfo) => {
-  chrome.tabs.get(highlightInfo.tabIds[0]).then(tab => {
-    const url = tab?.url;
-    if (url) {
-      ws?.send(JSON.stringify({ logic: 'url_highlighted', url }));
-    }
-  });
-};
-
-const _onZoomChange = (zoomChangeInfo: chrome.tabs.ZoomChangeInfo) => {};
-
-const _onMoved = (tabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {};
 
 const connectWebSocket = () => {
   if (isConnecting || (ws && ws.readyState === WebSocket.OPEN)) {
@@ -100,10 +79,14 @@ const connectWebSocket = () => {
     };
 
     ws.onmessage = event => {
-      const { source, translation, timestamp, url } = JSON.parse(event.data);
+      const { source, translation, url } = JSON.parse(event.data);
       const v = waitingQuery[source];
       if (v) {
-        v.resolves.forEach(resolve => resolve({ func: 'query', body: { translation, source, url } }));
+        const data: QueryResponse = {
+          func: 'QueryResponse',
+          body: { translation, source, url },
+        };
+        v.resolves.forEach(resolve => resolve(data));
         delete waitingQuery[source];
       }
     };

@@ -134,7 +134,7 @@ const initializeKeyListeners = () => {
 // Initialize the key listener
 initializeKeyListeners();
 
-const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code'];
+const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code', 'math', 'textarea'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 const ignoreTypes = ignoreTypeLower.concat(ignoreTypeUpper);
 

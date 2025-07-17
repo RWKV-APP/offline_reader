@@ -48,6 +48,55 @@ const RWKVNotification: React.FC = () => {
   );
 };
 
+const Dashboard: React.FC = () => {
+  // 是否运行中, websocket 是否处于链接状态?
+  const [running, setRunning] = useState(false);
+  // 页面是否被忽略
+  const [ignored, setIgnored] = useState(false);
+  // 页面交互模式
+  const [interactionMode, setInteractionMode] = useState<'hover' | 'full' | null>(null);
+  // 演示模式
+  const [demoMode, setDemoMode] = useState(false);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        right: 200,
+        top: 0,
+        width: 200,
+        zIndex: 2147483647,
+        pointerEvents: 'none',
+        backgroundColor: 'rgba(255, 0, 0, 0.5)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '1.5rem',
+        lineHeight: 1,
+      }}>
+      <div style={{ fontSize: '2rem' }}>Running</div>
+      <div>{running ? 'Yes' : 'No'}</div>
+
+      <div style={{ height: 12 }} />
+
+      <div style={{ fontSize: '2rem' }}>Ignored</div>
+      <div>{ignored ? 'Yes' : 'No'}</div>
+
+      <div style={{ height: 12 }} />
+
+      <div style={{ fontSize: '2rem' }}>Interaction Mode</div>
+      <div>{interactionMode ?? 'None'}</div>
+
+      <div style={{ height: 12 }} />
+
+      <div style={{ fontSize: '2rem' }}>演示模式</div>
+      <div>{demoMode ? 'Yes' : 'No'}</div>
+    </div>
+  );
+};
+
 export default function App() {
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
     display: 'none',
@@ -140,6 +189,7 @@ export default function App() {
 
   return (
     <>
+      <Dashboard />
       {showText && (
         <div
           className="pointer-events-none absolute border border-blue-500"
