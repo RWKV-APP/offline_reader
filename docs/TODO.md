@@ -48,6 +48,7 @@
 
 - [ ] 哔哩哔哩的 header 没了
 - [ ] 加载时间较长时, github.com 新 loading 出来的 DOM 不会被翻译
+  - [ ] 其他的网站也会出现这种情况
 - [x] 某些 circle progress 不会消失
   - [x] https://github.com/
   - [x] https://www.npmjs.com/package/cld3-asm
