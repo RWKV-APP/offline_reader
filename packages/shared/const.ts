@@ -35,4 +35,5 @@ export const ignoreHref = [
   'https://www.people.com.cn/', // 人民网
   'https://www.chinanews.com.cn/', // 中国新闻网
   'https://www.gov.cn/', // 中国政府网
+  'https://www.gamersky.com/', // 游民星空
 ];

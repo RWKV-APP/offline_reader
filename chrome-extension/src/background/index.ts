@@ -21,6 +21,7 @@ const state: State = {
   ignored: false,
   running: false,
   ignoreHref,
+  inspecting: false,
 };
 
 const syncStateToContent = () => {

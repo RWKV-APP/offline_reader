@@ -59,4 +59,5 @@ export interface State {
   ignored: boolean;
   running: boolean;
   ignoreHref: string[];
+  inspecting: boolean;
 }
