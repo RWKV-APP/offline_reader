@@ -1,11 +1,8 @@
 const priorityMap: { [key: string]: number } = {
-  'turbo-frame': 20,
-  article: 40,
-  main: 30,
-  section: 10,
-  p: 10,
-  h1: 10,
-  h2: 10,
+  'turbo-frame': 30,
+  article: 20,
+  main: 10,
+  section: 9,
   header: -10,
   footer: -10,
   comment: -20,
@@ -18,5 +15,8 @@ const priorityMap: { [key: string]: number } = {
 
 export const getPriority = (node: HTMLElement) => {
   const nodeName = node.nodeName;
-  return priorityMap[nodeName] ?? priorityMap[nodeName.toLowerCase()] ?? 0;
+  const innerText = node.innerText;
+  let textBasedPriority = innerText.startsWith('#') ? -1 : 0;
+  if (innerText.startsWith('@')) textBasedPriority = -1;
+  return priorityMap[nodeName] ?? priorityMap[nodeName.toLowerCase()] ?? textBasedPriority ?? 0;
 };
