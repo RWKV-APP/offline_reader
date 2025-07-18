@@ -298,17 +298,20 @@ const handleNode = (_node: Node): boolean => {
   if (notEmptyTextChildNodesCount <= 0) return false;
 
   node.classList.add('rwkv_offline_target');
+  if (state.inspecting) node.classList.add('rwkv_inspecting');
   const breakLineHappened = checkBreakLineHappened(node);
   const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 
   const loadingSpinner = document.createElement('span');
   if (node.querySelector('.rwkv_loading_spinner') === null) {
     loadingSpinner.classList.add('rwkv_loading_spinner');
+    if (state.inspecting) loadingSpinner.classList.add('rwkv_inspecting');
     node.appendChild(loadingSpinner);
   }
 
   const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
   nodeToBeAdded.classList.add('rwkv_offline_translation_result');
+  if (state.inspecting) nodeToBeAdded.classList.add('rwkv_inspecting');
   queryWS({ source: textContent, logic: 'translate', url: currentUrl })
     .then(json => {
       if (node.classList.contains('rwkv_offline_translation_done')) return;
@@ -320,6 +323,7 @@ const handleNode = (_node: Node): boolean => {
         nodeToBeAdded.textContent = inner;
         node.appendChild(nodeToBeAdded);
         node.classList.add('rwkv_offline_translation_done');
+        if (state.inspecting) node.classList.add('rwkv_inspecting');
       }
     })
     .finally(() => {

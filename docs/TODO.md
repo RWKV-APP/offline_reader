@@ -6,10 +6,10 @@
 
 - [ ] Bundle chrome extension files
 - [ ] 使用教程
-- [ ] 移除红框
 - [ ] 确保转圈会消失
   - [ ] 如果没有运行, 就移除所有转圈
 - [ ] 演示模式
+- [x] 移除红框
 - [x] 状态同步
 - [x] Test on Windows
 - [x] Backend UI

@@ -20,7 +20,7 @@ export const injectCss = () => {
 }
 
 .rwkv_loading_spinner.rwkv_inspecting {
-  border-color: rgba(255, 0, 0, 1) !important;
+  background-color: rgba(255, 0, 0, 0.5) !important;
 }
 
 .rwkv_offline_target {
