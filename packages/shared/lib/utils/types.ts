@@ -18,6 +18,9 @@ export interface QueryRequest {
     source: string;
     logic: 'translate' | 'loop';
     url: string;
+    nodeName: string;
+    priority: number;
+    tick: number;
   };
 }
 

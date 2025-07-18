@@ -56,7 +56,7 @@ const listenMessageForUI = (
 
     switch (func) {
       case 'QueryRequest': {
-        const { source, logic, url } = message.body;
+        const { source, logic, url, nodeName, priority, tick } = message.body;
         const tabId = sender.tab?.id;
         const v = waitingQuery[source];
         if (v === undefined) {
@@ -68,7 +68,8 @@ const listenMessageForUI = (
             v.resolves.push(sendResponse);
           }
         }
-        ws?.send(JSON.stringify({ source, logic, url, tabId }));
+        const data = { source, logic, url, tabId, nodeName, priority, tick };
+        ws?.send(JSON.stringify(data));
         return true;
       }
       case 'GetState': {
@@ -87,6 +88,15 @@ const listenMessageForUI = (
         state.inspecting = inspecting;
         syncStateToContent();
         return false;
+      }
+      case 'QueryResponse': {
+        break;
+      }
+      case 'OnStateChanged': {
+        break;
+      }
+      case 'GetStateResponse': {
+        break;
       }
     }
     return false;

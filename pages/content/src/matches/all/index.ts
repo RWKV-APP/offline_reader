@@ -3,7 +3,6 @@ import { injectCss } from './injectcss';
 import { state } from './state';
 import { ignoreHref } from '@extension/shared';
 import { sampleFunction } from '@src/sample-function';
-import { run } from 'node:test';
 
 injectCss();
 
@@ -58,6 +57,8 @@ const handleStateChanged = (event: CustomEvent) => {
       document.body.querySelectorAll('.rwkv_loading_spinner').forEach(node => {
         node.remove();
       });
+    } else {
+      document.body.querySelectorAll('*').forEach(handleNode);
     }
   }
 };
@@ -211,6 +212,3 @@ observer.observe(document.body, {
   childList: true,
   subtree: true,
 });
-
-// 初始遍历已有 DOM
-document.body.querySelectorAll('*').forEach(handleNode);

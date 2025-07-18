@@ -1,14 +1,16 @@
 import { checkBreakLineHappened } from '.';
+import { getPriority } from './getPriority';
 import { state } from './state';
 import { ignoreHref, isChinese, isUrl, queryWS, formatTranslation } from '@extension/shared';
 
 const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code', 'math', 'textarea'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
 const ignoreTypes = ignoreTypeLower.concat(ignoreTypeUpper);
-// const checkingTypeLower = ['turbo-frame', 'article'];
-const checkingTypeLower: string[] = [];
+const checkingTypeLower = ['turbo-frame', 'article', 'main'];
+// const checkingTypeLower: string[] = [];
 const checkingTypeUpper = checkingTypeLower.map(item => item.toUpperCase());
 const checkingTypes = checkingTypeLower.concat(checkingTypeUpper);
+let tick = 0;
 
 export const handleNode = (_node: Node): boolean => {
   const currentUrl = window.location.href;
@@ -17,12 +19,15 @@ export const handleNode = (_node: Node): boolean => {
     if (startWith) return false;
   }
 
-  if (state.running) return false;
-
   const node = _node as HTMLElement;
   const nodeName = node.nodeName;
 
   const checking = checkingTypes.includes(nodeName);
+
+  if (!state.running) {
+    // if (checking) console.log({ nodeName, running: state.running });
+    return false;
+  }
 
   // if (checking) console.log({ nodeName, step: 0 });
 
@@ -160,7 +165,9 @@ export const handleNode = (_node: Node): boolean => {
   const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
   nodeToBeAdded.classList.add('rwkv_offline_translation_result');
   if (state.inspecting) nodeToBeAdded.classList.add('rwkv_inspecting');
-  queryWS({ source: textContent, logic: 'translate', url: currentUrl })
+  const priority = getPriority(node);
+  tick++;
+  queryWS({ source: textContent, logic: 'translate', url: currentUrl, nodeName, priority, tick })
     .then(json => {
       if (node.classList.contains('rwkv_offline_translation_done')) return;
 
