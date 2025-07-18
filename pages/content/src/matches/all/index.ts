@@ -1,16 +1,11 @@
-import {
-  formatTranslation,
-  ignoreHref,
-  isChinese,
-  isUrl,
-  queryWS,
-  targetClass,
-  translationDoneClass,
-} from '@extension/shared';
+import { injectCss } from './injectcss';
+import { formatTranslation, ignoreHref, isChinese, isUrl, queryWS } from '@extension/shared';
 import { translationModeStorage } from '@extension/storage';
 import { sampleFunction } from '@src/sample-function';
 import type { State } from '@extension/shared';
 import type { TranslationMode } from '@extension/storage/lib/base/enums';
+
+injectCss();
 
 console.log('[CEB] All content script loaded');
 
@@ -26,19 +21,52 @@ const state: State = {
 };
 
 const handleStateChanged = (event: CustomEvent) => {
-  const { interactionMode, demoMode, ignored, running } = event.detail;
+  const { interactionMode, demoMode, ignored, running, inspecting } = event.detail;
   state.interactionMode = interactionMode;
   state.demoMode = demoMode;
   state.ignored = ignored;
   state.running = running;
+  const inspectingChanged = state.inspecting !== inspecting;
+  state.inspecting = inspecting;
   console.log('state-changed: content', state);
+
+  if (inspectingChanged) {
+    document.body.querySelectorAll('.rwkv_offline_target').forEach(node => {
+      if (inspecting && !node.classList.contains('rwkv_inspecting')) {
+        node.classList.add('rwkv_inspecting');
+      } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
+        node.classList.remove('rwkv_inspecting');
+      }
+    });
+    document.body.querySelectorAll('.rwkv_offline_translation_done').forEach(node => {
+      if (inspecting && !node.classList.contains('rwkv_inspecting')) {
+        node.classList.add('rwkv_inspecting');
+      } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
+        node.classList.remove('rwkv_inspecting');
+      }
+    });
+    document.body.querySelectorAll('.rwkv_offline_translation_result').forEach(node => {
+      if (inspecting && !node.classList.contains('rwkv_inspecting')) {
+        node.classList.add('rwkv_inspecting');
+      } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
+        node.classList.remove('rwkv_inspecting');
+      }
+    });
+    document.body.querySelectorAll('.rwkv_loading_spinner').forEach(node => {
+      if (inspecting && !node.classList.contains('rwkv_inspecting')) {
+        node.classList.add('rwkv_inspecting');
+      } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
+        node.classList.remove('rwkv_inspecting');
+      }
+    });
+  }
 };
 
 document.addEventListener('state-changed', handleStateChanged as EventListener);
 
 const handleMouseOver = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
-  const isTarget = target.classList.contains(targetClass);
+  const isTarget = target.classList.contains('rwkv_offline_target');
 
   if (isTarget && target && target.innerText) {
     const text = target.innerText.trim();
@@ -181,7 +209,7 @@ const handleNode = (_node: Node): boolean => {
     if (closest) return false;
   }
 
-  if (parentNode.classList.contains(targetClass)) return false;
+  if (parentNode.classList.contains('rwkv_offline_target')) return false;
 
   // 如果父节点不需要处理
   if (ignoreTypes.includes(parentNodeName)) return false;
@@ -241,9 +269,7 @@ const handleNode = (_node: Node): boolean => {
     return true;
   }
 
-  if (node.classList.contains(translationDoneClass)) {
-    return false;
-  }
+  if (node.classList.contains('rwkv_offline_translation_done')) return false;
 
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
   let nonTextChildNodesTextContent = '';
@@ -271,23 +297,21 @@ const handleNode = (_node: Node): boolean => {
 
   if (notEmptyTextChildNodesCount <= 0) return false;
 
-  // DEBUG 时标记
-  node.style.backgroundColor = 'rgba(0, 0, 255, 0.5)';
-  node.style.outline = '1px solid rgba(0, 0, 255, 1.0)';
-  node.style.color = 'rgba(255, 255, 255, 1.0)';
-
-  node.classList.add(targetClass);
+  node.classList.add('rwkv_offline_target');
   const breakLineHappened = checkBreakLineHappened(node);
   const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 
   const loadingSpinner = document.createElement('span');
-  loadingSpinner.classList.add('ceb-loading-spinner');
-  node.appendChild(loadingSpinner);
+  if (node.querySelector('.rwkv_loading_spinner') === null) {
+    loadingSpinner.classList.add('rwkv_loading_spinner');
+    node.appendChild(loadingSpinner);
+  }
 
   const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
+  nodeToBeAdded.classList.add('rwkv_offline_translation_result');
   queryWS({ source: textContent, logic: 'translate', url: currentUrl })
     .then(json => {
-      if (node.classList.contains(translationDoneClass)) return;
+      if (node.classList.contains('rwkv_offline_translation_done')) return;
 
       const { translation, source } = json.body;
       if (translation && translation !== source) {
@@ -295,14 +319,13 @@ const handleNode = (_node: Node): boolean => {
         if (!breakLineHappened) inner = ' ' + inner;
         nodeToBeAdded.textContent = inner;
         node.appendChild(nodeToBeAdded);
-        node.classList.add(translationDoneClass);
-        nodeToBeAdded.style.backgroundColor = 'rgba(0, 255, 0, 0.5)';
-        nodeToBeAdded.style.outline = '1px solid rgba(0, 255, 0, 1.0)';
-        nodeToBeAdded.style.color = 'rgba(255, 255, 255, 1.0)';
+        node.classList.add('rwkv_offline_translation_done');
       }
     })
     .finally(() => {
-      loadingSpinner.remove();
+      if (loadingSpinner.parentElement === node) {
+        loadingSpinner.remove();
+      }
     });
 
   return true;
