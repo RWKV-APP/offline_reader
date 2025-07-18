@@ -35,4 +35,6 @@ export const ignoreHref = [
   'https://www.gamersky.com', // 游民星空
   'https://t.bilibili.com', // 游民星空
   'https://zh.wikipedia.org', // 游民星空
+
+  'https://oa.rwkvos.com/',
 ];
