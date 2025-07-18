@@ -63,6 +63,8 @@ export default config(
         },
       ],
       'arrow-body-style': ['warn', 'as-needed'],
+      // ✅ New rules here
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/consistent-type-exports': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
@@ -90,7 +92,6 @@ export default config(
       'import-x/no-deprecated': 'warn',
       'import-x/no-duplicates': ['warn', { considerQueryString: true, 'prefer-inline': false }],
       'import-x/consistent-type-specifier-style': 'warn',
-      'import-x/exports-last': 'warn',
       'import-x/first': 'warn',
     },
     linterOptions: {
