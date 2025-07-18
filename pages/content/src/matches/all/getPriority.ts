@@ -10,7 +10,8 @@ const priorityMap: { [key: string]: number } = {
   sidebar: -20,
   menu: -20,
   options: -20,
-  cite: -11,
+  figure: -11,
+  cite: -12,
 };
 
 export const getPriority = (node: HTMLElement) => {
@@ -18,5 +19,6 @@ export const getPriority = (node: HTMLElement) => {
   const innerText = node.innerText;
   let textBasedPriority = innerText.startsWith('#') ? -1 : 0;
   if (innerText.startsWith('@')) textBasedPriority = -1;
+  if (!/^[a-zA-Z]/.test(innerText)) textBasedPriority = -1;
   return priorityMap[nodeName] ?? priorityMap[nodeName.toLowerCase()] ?? textBasedPriority ?? 0;
 };
