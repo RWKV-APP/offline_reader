@@ -2,6 +2,7 @@ import { handleNode } from './handleNode';
 import { injectCss } from './injectcss';
 import { state } from './state';
 import { ignoreHref } from '@extension/shared';
+import type { AllMessage } from '@extension/shared';
 
 export const contentStart = () => {
   injectCss();
@@ -60,7 +61,47 @@ export const contentStart = () => {
     }
   };
 
+  // 监听来自 background 的消息
+  const handleMessage = (
+    message: AllMessage,
+    sender: chrome.runtime.MessageSender,
+    sendResponse: (response?: any) => void,
+  ) => {
+    console.log('content: 收到消息', message.func);
+
+    const { func } = message;
+    switch (func) {
+      case 'GetStateResponse':
+      case 'OnStateChanged': {
+        console.log('content: 收到状态更新', message);
+        // 触发自定义事件，让现有的监听器处理
+        document.dispatchEvent(new CustomEvent('state-changed', { detail: message }));
+        break;
+      }
+      case 'QueryRequest':
+      case 'QueryResponse':
+      case 'SetState':
+      case 'GetState': {
+        // 这些消息在 content script 中不需要处理
+        break;
+      }
+    }
+  };
+
+  // 添加消息监听器
+  chrome.runtime.onMessage.addListener(handleMessage);
+
   document.addEventListener('state-changed', handleStateChanged as EventListener);
+
+  // 初始化时请求状态
+  setTimeout(() => {
+    console.log('content: 请求初始状态');
+    try {
+      chrome.runtime.sendMessage({ func: 'GetState' });
+    } catch (error) {
+      console.error('content: 请求状态失败', error);
+    }
+  }, 100);
 
   const handleMouseOver = (event: MouseEvent) => {
     const target = event.target as HTMLElement;

@@ -9,6 +9,7 @@ export const BaseWidget: React.FC<{
   style?: React.CSSProperties;
 }> = ({ icon, title, value, onClick, style: additionalStyle }) => {
   const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -29,7 +30,8 @@ export const BaseWidget: React.FC<{
     borderRadius: '8px',
     padding: '2px 4px',
     userSelect: 'none',
-    transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+    transition: 'transform 0.15s ease-in-out, opacity 0.3s ease-in-out',
+    transform: isHovered ? 'translateX(-5px)' : 'translateX(0)',
     ...(isDarkMode
       ? {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -51,7 +53,11 @@ export const BaseWidget: React.FC<{
 
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div onClick={onClick} style={style}>
+    <div
+      onClick={onClick}
+      style={style}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}>
       <div
         style={{
           width: '24px',

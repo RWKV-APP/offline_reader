@@ -2,4 +2,5 @@
 alwaysApply: true
 ---
 
-- 当你作为 agent 时, 再帮我写完代码后, 不要跑任何 pnpm 命令
+- 不要自动跑任何 pnpm 命令
+- 不要自动书写 README.md 文件

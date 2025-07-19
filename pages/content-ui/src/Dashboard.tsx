@@ -14,6 +14,7 @@ export const Dashboard: FC = () => {
     hovered,
     shouldShowOthers,
     running,
+    inspecting, // 添加缺失的 inspecting 状态
     // 操作方法
     setHovered,
     setHoveringOthers,

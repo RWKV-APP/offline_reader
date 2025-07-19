@@ -1,7 +1,7 @@
 import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
 import { ignoreHref } from '@extension/shared';
-import { exampleThemeStorage, translationModeStorage } from '@extension/storage';
+import { exampleThemeStorage, translationModeStorage, contentUIStateStorage } from '@extension/storage';
 import type { AllMessage, QueryResponse, State } from '@extension/shared';
 
 console.log('Background loaded');
@@ -24,6 +24,7 @@ let isConnecting = false;
 
 const waitingQuery: { [key: string]: { resolves: [(value: AllMessage) => void] } } = {};
 
+// 初始化状态，从 storage 中恢复
 const state: State = {
   interactionMode: 'full',
   demoMode: false,
@@ -32,6 +33,29 @@ const state: State = {
   ignoreHref,
   inspecting: false,
 };
+
+// 从 storage 中恢复状态
+const initializeStateFromStorage = async () => {
+  try {
+    console.log('background: 从 storage 中恢复状态');
+    const storedState = await contentUIStateStorage.get();
+    console.log('background: 恢复的状态', storedState);
+
+    // 更新状态，但保持 running 状态为 false（需要 WebSocket 连接）
+    state.interactionMode = storedState.interactionMode;
+    state.demoMode = storedState.demoMode;
+    state.inspecting = storedState.inspecting;
+    state.ignored = storedState.ignored;
+    state.running = false; // 初始时设为 false，等 WebSocket 连接成功后再设为 true
+
+    console.log('background: 状态已恢复', state);
+  } catch (error) {
+    console.error('background: 恢复状态失败', error);
+  }
+};
+
+// 在 background script 启动时恢复状态
+initializeStateFromStorage();
 
 const syncStateToContent = async () => {
   const tabs = await chrome.tabs.query({});
@@ -83,9 +107,21 @@ const listenMessageForUI = (
       }
       case 'SetState': {
         const { interactionMode, demoMode, inspecting } = message;
+        console.log('background: 收到 SetState', { interactionMode, demoMode, inspecting });
+
         state.interactionMode = interactionMode;
         state.demoMode = demoMode;
         state.inspecting = inspecting;
+
+        // 同步到 storage
+        contentUIStateStorage.updateGlobalState({
+          running: state.running,
+          ignored: state.ignored,
+          interactionMode,
+          demoMode,
+          inspecting,
+        });
+
         syncStateToContent();
         return false;
       }
@@ -132,6 +168,16 @@ const connectWebSocket = () => {
       isConnecting = false;
       ws?.send(JSON.stringify({ type: 'ping' }));
       state.running = true;
+
+      // 更新 storage 中的 running 状态
+      contentUIStateStorage.updateGlobalState({
+        running: true,
+        ignored: state.ignored,
+        interactionMode: state.interactionMode,
+        demoMode: state.demoMode,
+        inspecting: state.inspecting,
+      });
+
       syncStateToContent();
     };
 
@@ -152,6 +198,16 @@ const connectWebSocket = () => {
       console.error('❌ WebSocket 错误:', err);
       ws?.close(); // 主动触发 onclose
       state.running = false;
+
+      // 更新 storage 中的 running 状态
+      contentUIStateStorage.updateGlobalState({
+        running: false,
+        ignored: state.ignored,
+        interactionMode: state.interactionMode,
+        demoMode: state.demoMode,
+        inspecting: state.inspecting,
+      });
+
       syncStateToContent();
     };
 
@@ -160,6 +216,16 @@ const connectWebSocket = () => {
       isConnecting = false;
       ws = null;
       state.running = false;
+
+      // 更新 storage 中的 running 状态
+      contentUIStateStorage.updateGlobalState({
+        running: false,
+        ignored: state.ignored,
+        interactionMode: state.interactionMode,
+        demoMode: state.demoMode,
+        inspecting: state.inspecting,
+      });
+
       syncStateToContent();
     };
 
@@ -169,6 +235,16 @@ const connectWebSocket = () => {
     isConnecting = false;
     success = false;
     state.running = false;
+
+    // 更新 storage 中的 running 状态
+    contentUIStateStorage.updateGlobalState({
+      running: false,
+      ignored: state.ignored,
+      interactionMode: state.interactionMode,
+      demoMode: state.demoMode,
+      inspecting: state.inspecting,
+    });
+
     syncStateToContent();
   }
 

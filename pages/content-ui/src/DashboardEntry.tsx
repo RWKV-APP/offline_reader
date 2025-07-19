@@ -6,6 +6,7 @@ export const DashboardEntry: React.FC<{
   style?: React.CSSProperties;
 }> = ({ onClick, style: additionalStyle }) => {
   const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [isHovered, setIsHovered] = useState(false);
 
   const icon = (
     <img
@@ -40,7 +41,8 @@ export const DashboardEntry: React.FC<{
     borderBottomLeftRadius: '12px',
     padding: '2px 4px',
     userSelect: 'none',
-    transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+    transition: 'transform 0.15s ease-in-out, opacity 0.3s ease-in-out',
+    transform: isHovered ? 'translateX(-5px)' : 'translateX(0)',
     cursor: 'pointer',
     ...(isDarkMode
       ? {
@@ -62,7 +64,11 @@ export const DashboardEntry: React.FC<{
   }
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div onClick={onClick} style={style}>
+    <div
+      onClick={onClick}
+      style={style}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}>
       {icon}
       <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '4px' }}>
         <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>RWKV</div>
