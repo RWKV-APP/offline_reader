@@ -4,3 +4,5 @@ alwaysApply: true
 
 - 不要自动跑任何 pnpm 命令
 - 不要自动书写 README.md 文件
+- 尽量使用 for 循环, 尽量不实用 forEach
+- 在 Typescript 中, 不要使用 any, 尽量推导出来类型

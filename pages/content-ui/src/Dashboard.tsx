@@ -1,6 +1,7 @@
 import { BBox, DemoMode, DiagnoseMode, IgnoredStatus, InteractionMode, RunningStatus } from './components';
 import { DashboardEntry } from './DashboardEntry';
 import { useContentUIState } from './hooks/useContentUIState';
+import { useFullscreenDetection } from './hooks/useFullscreenDetection';
 import { useCallback } from 'react';
 import type { FC } from 'react';
 
@@ -15,6 +16,9 @@ export const Dashboard: FC = () => {
     setHovered,
     setHoveringOthers,
   } = useContentUIState();
+
+  // 全屏检测
+  const isFullscreen = useFullscreenDetection();
 
   // 简化的事件处理 - 确保状态互斥
   const handleEntryMouseEnter = useCallback(() => {
@@ -52,6 +56,10 @@ export const Dashboard: FC = () => {
     paddingRight: 0,
     userSelect: 'none',
     // backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    // 全屏时隐藏 Dashboard
+    opacity: isFullscreen ? 0 : 1,
+    visibility: isFullscreen ? 'hidden' : 'visible',
+    transition: 'opacity 0.2s ease-out, visibility 0.2s ease-out',
   };
 
   const widgetAnimationStyle = {
@@ -59,6 +67,11 @@ export const Dashboard: FC = () => {
     opacity: shouldShowOthers ? 1 : 0,
     transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
   };
+
+  // 如果处于全屏模式，不渲染 Dashboard
+  if (isFullscreen) {
+    return null;
+  }
 
   return (
     <div style={dashboardStyle}>
