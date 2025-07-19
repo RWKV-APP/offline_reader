@@ -2,7 +2,7 @@ import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
 import { ignoreHref } from '@extension/shared';
 import { exampleThemeStorage, translationModeStorage, contentUIStateStorage } from '@extension/storage';
-import type { AllMessage, QueryResponse, State } from '@extension/shared';
+import type { AllMessage, QueryResponse, State, ElementPosition } from '@extension/shared';
 
 console.log('Background loaded');
 console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
@@ -32,6 +32,7 @@ const state: State = {
   running: false,
   ignoreHref,
   inspecting: false,
+  showBBox: false,
 };
 
 // 从 storage 中恢复状态
@@ -45,6 +46,7 @@ const initializeStateFromStorage = async () => {
     state.interactionMode = storedState.interactionMode;
     state.demoMode = storedState.demoMode;
     state.inspecting = storedState.inspecting;
+    state.showBBox = storedState.showBBox;
     state.ignored = storedState.ignored;
     state.running = false; // 初始时设为 false，等 WebSocket 连接成功后再设为 true
 
@@ -106,12 +108,13 @@ const listenMessageForUI = (
         return true;
       }
       case 'SetState': {
-        const { interactionMode, demoMode, inspecting } = message;
-        console.log('background: 收到 SetState', { interactionMode, demoMode, inspecting });
+        const { interactionMode, demoMode, inspecting, showBBox } = message;
+        console.log('background: 收到 SetState', { interactionMode, demoMode, inspecting, showBBox });
 
         state.interactionMode = interactionMode;
         state.demoMode = demoMode;
         state.inspecting = inspecting;
+        state.showBBox = showBBox;
 
         // 同步到 storage
         contentUIStateStorage.updateGlobalState({
@@ -120,6 +123,7 @@ const listenMessageForUI = (
           interactionMode,
           demoMode,
           inspecting,
+          showBBox,
         });
 
         syncStateToContent();
@@ -132,6 +136,32 @@ const listenMessageForUI = (
         break;
       }
       case 'GetStateResponse': {
+        break;
+      }
+      case 'PositionSync': {
+        const { positions, tabId } = message.body;
+        const actualTabId = sender.tab?.id || tabId;
+
+        if (actualTabId && actualTabId !== -1) {
+          // 转发位置信息到content-ui
+          try {
+            chrome.tabs.sendMessage(actualTabId, {
+              func: 'PositionSync',
+              body: { positions, tabId: actualTabId },
+            });
+          } catch (e) {
+            console.warn('background: 转发位置同步消息失败', e);
+          }
+        }
+
+        // 发送响应
+        sendResponse({
+          func: 'PositionSyncResponse',
+          body: { success: true },
+        });
+        return true;
+      }
+      case 'PositionSyncResponse': {
         break;
       }
     }
@@ -176,6 +206,7 @@ const connectWebSocket = () => {
         interactionMode: state.interactionMode,
         demoMode: state.demoMode,
         inspecting: state.inspecting,
+        showBBox: state.showBBox,
       });
 
       syncStateToContent();
@@ -206,6 +237,7 @@ const connectWebSocket = () => {
         interactionMode: state.interactionMode,
         demoMode: state.demoMode,
         inspecting: state.inspecting,
+        showBBox: state.showBBox,
       });
 
       syncStateToContent();
@@ -224,6 +256,7 @@ const connectWebSocket = () => {
         interactionMode: state.interactionMode,
         demoMode: state.demoMode,
         inspecting: state.inspecting,
+        showBBox: state.showBBox,
       });
 
       syncStateToContent();
@@ -243,6 +276,7 @@ const connectWebSocket = () => {
       interactionMode: state.interactionMode,
       demoMode: state.demoMode,
       inspecting: state.inspecting,
+      showBBox: state.showBBox,
     });
 
     syncStateToContent();

@@ -17,9 +17,33 @@ export const colorfulLog = (message: string, type: ColorType) => {
     case 'warning':
       color = COLORS.FgYellow;
       break;
-    default:
+    case 'Reset':
+    case 'Bright':
+    case 'Dim':
+    case 'Underscore':
+    case 'Blink':
+    case 'Reverse':
+    case 'Hidden':
+    case 'FgBlack':
+    case 'FgRed':
+    case 'FgGreen':
+    case 'FgYellow':
+    case 'FgBlue':
+    case 'FgMagenta':
+    case 'FgCyan':
+    case 'FgWhite':
+    case 'BgBlack':
+    case 'BgRed':
+    case 'BgGreen':
+    case 'BgYellow':
+    case 'BgBlue':
+    case 'BgMagenta':
+    case 'BgCyan':
+    case 'BgWhite':
       color = COLORS[type];
       break;
+    default:
+      throw new Error(`Unknown color type: ${type}`);
   }
 
   console.info(color, message);

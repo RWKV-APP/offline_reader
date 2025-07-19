@@ -28,6 +28,15 @@ const onMessage = (
     case 'GetState': {
       break;
     }
+    case 'PositionSync': {
+      console.log('content-ui: 收到位置同步消息', message.body);
+      // 触发自定义事件，让UI组件处理
+      document.dispatchEvent(new CustomEvent('ceb-position-sync', { detail: message.body }));
+      break;
+    }
+    case 'PositionSyncResponse': {
+      break;
+    }
   }
 };
 

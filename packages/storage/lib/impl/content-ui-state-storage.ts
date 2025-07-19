@@ -7,6 +7,7 @@ interface SetState {
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   inspecting: boolean;
+  showBBox: boolean;
 }
 
 const storage = createStorage<ContentUIStateType>(
@@ -18,6 +19,8 @@ const storage = createStorage<ContentUIStateType>(
     interactionMode: 'hover',
     demoMode: false,
     inspecting: false,
+    // Local UI state defaults
+    showBBox: false,
   },
   {
     storageEnum: StorageEnum.Local,
@@ -51,6 +54,7 @@ export const contentUIStateStorage: ContentUIStorageType = {
         inspecting: false,
         demoMode: currentState.demoMode,
         interactionMode: newMode,
+        showBBox: currentState.showBBox,
       };
       chrome.runtime.sendMessage(msg);
     } catch (error) {
@@ -78,6 +82,7 @@ export const contentUIStateStorage: ContentUIStorageType = {
         interactionMode: currentState.interactionMode,
         demoMode: newDemoMode,
         inspecting: false,
+        showBBox: currentState.showBBox,
       };
       chrome.runtime.sendMessage(msg);
     } catch (error) {
@@ -104,10 +109,38 @@ export const contentUIStateStorage: ContentUIStorageType = {
         interactionMode: currentState.interactionMode,
         demoMode: currentState.demoMode,
         inspecting: newInspecting,
+        showBBox: currentState.showBBox,
       };
       chrome.runtime.sendMessage(msg);
     } catch (error) {
       console.error('storage: 切换诊断模式失败', error);
+    }
+  },
+
+  toggleBBox: async () => {
+    try {
+      const currentState = await storage.get();
+      const newShowBBox = !currentState.showBBox;
+
+      console.log('storage: 切换HUD诊断模式', { from: currentState.showBBox, to: newShowBBox });
+
+      // Update local state
+      await storage.set(prev => ({
+        ...prev,
+        showBBox: newShowBBox,
+      }));
+
+      // Send message to background
+      const msg: SetState = {
+        func: 'SetState',
+        interactionMode: currentState.interactionMode,
+        demoMode: currentState.demoMode,
+        inspecting: currentState.inspecting,
+        showBBox: newShowBBox,
+      };
+      chrome.runtime.sendMessage(msg);
+    } catch (error) {
+      console.error('storage: 切换HUD诊断模式失败', error);
     }
   },
 

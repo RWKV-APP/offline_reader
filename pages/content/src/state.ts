@@ -8,4 +8,5 @@ export const state: State = {
   running: false,
   ignoreHref,
   inspecting: false,
+  showBBox: false,
 };

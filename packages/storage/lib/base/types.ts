@@ -73,6 +73,7 @@ export interface ContentUIStateType {
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   inspecting: boolean;
+  showBBox: boolean;
 }
 
 export type ContentUIStorageType = BaseStorageType<ContentUIStateType> & {
@@ -80,11 +81,13 @@ export type ContentUIStorageType = BaseStorageType<ContentUIStateType> & {
   toggleInteractionMode: () => Promise<void>;
   toggleDemoMode: () => Promise<void>;
   toggleDiagnoseMode: () => Promise<void>;
+  toggleBBox: () => Promise<void>;
   updateGlobalState: (state: {
     running: boolean;
     ignored: boolean;
     interactionMode: 'hover' | 'full';
     demoMode: boolean;
     inspecting: boolean;
+    showBBox: boolean;
   }) => Promise<void>;
 };

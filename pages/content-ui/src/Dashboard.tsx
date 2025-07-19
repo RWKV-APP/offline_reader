@@ -1,3 +1,4 @@
+import { BBoxWidget } from './BBoxWidget';
 import { DashboardEntry } from './DashboardEntry';
 import { DemoModeWidget } from './DemoModeWidget';
 import { DiagnoseModeWidget } from './DiagnoseModeWidget';
@@ -91,6 +92,7 @@ export const Dashboard: FC = () => {
         <InteractionModeWidget style={widgetAnimationStyle} />
         <DemoModeWidget style={widgetAnimationStyle} />
         <DiagnoseModeWidget style={widgetAnimationStyle} />
+        <BBoxWidget style={widgetAnimationStyle} />
       </div>
     </div>
   );

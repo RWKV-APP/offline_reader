@@ -1,5 +1,6 @@
 import { injectCss } from './injectcss';
 import { parseNode } from './parseNode';
+import { startPositionMonitoring, stopPositionMonitoring, createTestPosition } from './positionMonitor';
 import { state } from './state';
 import { ignoreHref, rwkvClass, rwkvEvent } from '@extension/shared';
 import type { AllMessage } from '@extension/shared';
@@ -8,7 +9,7 @@ export const contentStart = () => {
   injectCss();
 
   const handleStateChanged = (event: CustomEvent) => {
-    const { interactionMode, demoMode, ignored, running, inspecting } = event.detail;
+    const { interactionMode, demoMode, ignored, running, inspecting, showBBox } = event.detail;
     state.interactionMode = interactionMode;
     state.demoMode = demoMode;
     state.ignored = ignored;
@@ -16,6 +17,8 @@ export const contentStart = () => {
     state.running = running;
     const inspectingChanged = state.inspecting !== inspecting;
     state.inspecting = inspecting;
+    const showBBoxChanged = state.showBBox !== showBBox;
+    state.showBBox = showBBox;
     console.log(`${rwkvEvent.stateChanged}: content`, state);
 
     if (inspectingChanged) {
@@ -55,8 +58,33 @@ export const contentStart = () => {
         document.body.querySelectorAll(`.${rwkvClass.spinner}`).forEach(node => {
           node.remove();
         });
+        // 停止位置监听
+        stopPositionMonitoring();
       } else {
         document.body.querySelectorAll('*').forEach(parseNode);
+        // 启动位置监听
+        startPositionMonitoring();
+
+        // 测试：3秒后发送一个测试位置
+        setTimeout(() => {
+          console.log('发送测试位置...');
+          createTestPosition();
+        }, 3000);
+      }
+    }
+
+    // 处理 HUD 诊断模式状态变化
+    if (showBBoxChanged) {
+      if (showBBox) {
+        console.log('HUD 诊断模式已开启');
+        // 如果 WebSocket 已连接，启动位置监听
+        if (state.running) {
+          startPositionMonitoring();
+        }
+      } else {
+        console.log('HUD 诊断模式已关闭');
+        // 停止位置监听
+        stopPositionMonitoring();
       }
     }
   };
@@ -81,7 +109,9 @@ export const contentStart = () => {
       case 'QueryRequest':
       case 'QueryResponse':
       case 'SetState':
-      case 'GetState': {
+      case 'GetState':
+      case 'PositionSync':
+      case 'PositionSyncResponse': {
         // 这些消息在 content script 中不需要处理
         break;
       }

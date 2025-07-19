@@ -1,5 +1,7 @@
+import { BBoxRenderer } from '../../components';
 import { Dashboard } from '../../Dashboard';
-import { formatQueryText } from '@extension/shared';
+import { formatQueryText, useStorage } from '@extension/shared';
+import { contentUIStateStorage } from '@extension/storage';
 import { useEffect, useState } from 'react';
 
 // Define the shape of the highlighter's style state
@@ -12,6 +14,11 @@ interface HighlighterStyle {
 }
 
 export default function App() {
+  const { showBBox } = useStorage(contentUIStateStorage);
+
+  // 调试信息
+  console.log('App: showBBox状态', { showBBox });
+
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
     display: 'none',
     left: 0,
@@ -102,6 +109,7 @@ export default function App() {
   return (
     <>
       <Dashboard />
+      <BBoxRenderer enabled={showBBox} />
       {showText && (
         <div
           className="pointer-events-none absolute border border-blue-500"
@@ -122,7 +130,7 @@ export default function App() {
             left: left - padding,
             bottom,
             width: width + padding * 2,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 255, 0.5)',
             border: '1px solid rgba(255, 255, 255, 0.5)',
           }}>
           {translation}

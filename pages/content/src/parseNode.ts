@@ -157,6 +157,15 @@ export const parseNode = (_node: Node): boolean => {
 
   node.classList.add(rwkvClass.target);
   if (state.inspecting) node.classList.add(rwkvClass.inspect);
+
+  // 调试日志
+  if (process.env.NODE_ENV === 'development') {
+    console.log('添加target类:', {
+      text: textContent?.slice(0, 50),
+      nodeName,
+      timestamp: new Date().toISOString(),
+    });
+  }
   const breakLineHappened = checkBreakLineHappened(node);
   const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 

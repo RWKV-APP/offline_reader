@@ -14,15 +14,17 @@ export const useContentUIState = () => {
   useEffect(() => {
     const handleStateChanged = (event: CustomEvent) => {
       try {
-        const { running, interactionMode, demoMode, inspecting } = event.detail;
-        console.log('content-ui: 收到状态更新', { running, interactionMode, demoMode, inspecting });
+        const { running, interactionMode, demoMode, inspecting, showBBox } = event.detail;
+        console.log('content-ui: 收到状态更新', { running, interactionMode, demoMode, inspecting, showBBox });
 
+        // 只更新从 background 传来的状态，保持本地状态不变
         contentUIStateStorage.updateGlobalState({
           running,
           ignored: ignoreHref.some(href => window.location.href.startsWith(href)),
           interactionMode,
           demoMode,
           inspecting,
+          showBBox,
         });
       } catch (error) {
         console.error('Error updating global state:', error);
@@ -34,7 +36,7 @@ export const useContentUIState = () => {
     return () => {
       document.removeEventListener(rwkvEvent.stateChanged, handleStateChanged as EventListener);
     };
-  }, []);
+  }, [globalState.showBBox]); // 添加依赖项以确保状态变化时重新订阅
 
   // 初始化时获取状态
   useEffect(() => {
@@ -63,6 +65,14 @@ export const useContentUIState = () => {
     // UI状态计算属性 - 诊断模式开启时保持显示
     shouldShowOthers: hovered || hoveringOthers || globalState.inspecting,
 
+    // 调试信息
+    debug: {
+      globalState,
+      hovered,
+      hoveringOthers,
+      shouldShowOthers: hovered || hoveringOthers || globalState.inspecting,
+    },
+
     // 全局操作方法
     toggleInteractionMode: () => {
       try {
@@ -86,6 +96,14 @@ export const useContentUIState = () => {
         contentUIStateStorage.toggleDiagnoseMode();
       } catch (error) {
         console.error('Error toggling diagnose mode:', error);
+      }
+    },
+    toggleBBox: () => {
+      try {
+        console.log('content-ui: 切换HUD诊断模式', { currentState: globalState.showBBox });
+        contentUIStateStorage.toggleBBox();
+      } catch (error) {
+        console.error('Error toggling HUD diagnose mode:', error);
       }
     },
 

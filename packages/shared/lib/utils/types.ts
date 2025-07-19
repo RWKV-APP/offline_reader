@@ -41,6 +41,7 @@ export interface SetState {
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   inspecting: boolean;
+  showBBox: boolean;
 }
 
 export interface OnStateChanged extends State {
@@ -55,7 +56,15 @@ export interface GetStateResponse extends State {
   func: 'GetStateResponse';
 }
 
-export type AllMessage = QueryRequest | QueryResponse | SetState | OnStateChanged | GetState | GetStateResponse;
+export type AllMessage =
+  | QueryRequest
+  | QueryResponse
+  | SetState
+  | OnStateChanged
+  | GetState
+  | GetStateResponse
+  | PositionSync
+  | PositionSyncResponse;
 
 export interface State {
   interactionMode: 'hover' | 'full';
@@ -64,4 +73,41 @@ export interface State {
   running: boolean;
   ignoreHref: string[];
   inspecting: boolean;
+  showBBox: boolean;
+}
+
+/**
+ * 元素位置信息
+ */
+export interface ElementPosition {
+  id: string;
+  rect: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  };
+  text: string;
+  type: 'target' | 'result' | 'spinner' | 'done';
+}
+
+/**
+ * 位置同步消息
+ */
+export interface PositionSync {
+  func: 'PositionSync';
+  body: {
+    positions: ElementPosition[];
+    tabId: number;
+  };
+}
+
+/**
+ * 位置同步响应
+ */
+export interface PositionSyncResponse {
+  func: 'PositionSyncResponse';
+  body: {
+    success: boolean;
+  };
 }

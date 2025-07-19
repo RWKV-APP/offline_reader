@@ -11,7 +11,7 @@ export const DiagnoseModeWidget: FC<{
   return (
     <BaseWidget
       icon={<FaBug style={{ color: inspecting ? '#ff6b6b' : undefined }} />}
-      title="诊断模式"
+      title="DOM 诊断模式"
       value={inspecting ? '已开启' : '已关闭'}
       onClick={toggleDiagnoseMode}
       style={{
