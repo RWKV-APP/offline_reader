@@ -4,6 +4,7 @@ import { DiagnoseModeWidget } from './DiagnoseModeWidget';
 import { useContentUIState } from './hooks/useContentUIState';
 import { IgnoredStatusWidget } from './IgnoredStatusWidget';
 import { InteractionModeWidget } from './InteractionModeWidget';
+import { RunningStatusWidget } from './RunningStatusWidget';
 import { useCallback } from 'react';
 import type { FC } from 'react';
 
@@ -12,6 +13,7 @@ export const Dashboard: FC = () => {
     // 状态
     hovered,
     shouldShowOthers,
+    running,
     // 操作方法
     setHovered,
     setHoveringOthers,
@@ -83,6 +85,7 @@ export const Dashboard: FC = () => {
         }}
         onMouseEnter={handleOthersMouseEnter}
         onMouseLeave={handleOthersMouseLeave}>
+        <RunningStatusWidget style={widgetAnimationStyle} />
         <IgnoredStatusWidget style={widgetAnimationStyle} />
         <InteractionModeWidget style={widgetAnimationStyle} />
         <DemoModeWidget style={widgetAnimationStyle} />

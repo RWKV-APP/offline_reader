@@ -51,8 +51,8 @@ export const useContentUIState = () => {
     hovered,
     hoveringOthers,
 
-    // UI状态计算属性
-    shouldShowOthers: hovered || hoveringOthers,
+    // UI状态计算属性 - 诊断模式开启时保持显示
+    shouldShowOthers: hovered || hoveringOthers || globalState.inspecting,
 
     // 全局操作方法
     toggleInteractionMode: () => {

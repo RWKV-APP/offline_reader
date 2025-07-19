@@ -30,7 +30,6 @@ export const injectCss = () => {
 .rwkv_offline_target.rwkv_inspecting {
   background-color: rgba(0, 255, 255, 0.5) !important;
   outline: 1px solid rgba(0, 255, 255, 1) !important;
-  color: rgba(255, 255, 255, 1) !important;
 }
 
 .rwkv_offline_translation_done {
@@ -40,7 +39,6 @@ export const injectCss = () => {
 .rwkv_offline_translation_done.rwkv_inspecting {
   background-color: rgba(0, 0, 255, 0.5) !important;
   outline: 1px solid rgba(0, 0, 255, 1) !important;
-  color: rgba(255, 255, 255, 1) !important;
 }
 
 .rwkv_offline_translation_result {
@@ -50,7 +48,6 @@ export const injectCss = () => {
 .rwkv_offline_translation_result.rwkv_inspecting {
   background-color: rgba(0, 255, 0, 0.5) !important;
   outline: 1px solid rgba(0, 255, 0, 1) !important;
-  color: rgba(255, 255, 255, 1) !important;
 }
 
 
@@ -61,7 +58,6 @@ export const injectCss = () => {
 .rwkv_offline_wrapper.rwkv_inspecting {
   background-color: rgba(255, 0, 0, 0.5) !important;
   outline: 1px solid rgba(255, 0, 0, 1) !important;
-  color: rgba(255, 255, 255, 1) !important;
 }
 `;
   document.head.appendChild(style);
