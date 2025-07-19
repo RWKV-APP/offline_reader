@@ -1,3 +1,4 @@
+import { rwkvEvent } from '@extension/shared';
 import type { AllMessage } from '@extension/shared';
 
 const onMessage = (
@@ -12,7 +13,7 @@ const onMessage = (
     case 'GetStateResponse':
     case 'OnStateChanged': {
       console.log('content-ui: 状态变化', message);
-      document.dispatchEvent(new CustomEvent('state-changed', { detail: message }));
+      document.dispatchEvent(new CustomEvent(rwkvEvent.stateChanged, { detail: message }));
       break;
     }
     case 'QueryRequest': {

@@ -1,7 +1,7 @@
 import { checkBreakLineHappened } from './checkBreakLineHappened';
 import { getPriority } from './getPriority';
 import { state } from './state';
-import { formatTranslation, ignoreHref, isChinese, isUrl, queryTranslation } from '@extension/shared';
+import { formatTranslation, ignoreHref, isChinese, isUrl, queryTranslation, rwkvClass } from '@extension/shared';
 
 const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code', 'math', 'textarea'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
@@ -121,7 +121,7 @@ export const parseNode = (_node: Node): boolean => {
 
   // if (checking) console.log({ nodeName, step: 8 });
 
-  if (node.classList.contains('rwkvOfflineTranslationDone')) return false;
+  if (node.classList.contains(rwkvClass.offlineTranslationDone)) return false;
 
   // if (checking) console.log({ nodeName, step: 9 });
 
@@ -154,26 +154,26 @@ export const parseNode = (_node: Node): boolean => {
 
   // if (checking) console.log({ nodeName, step: 11 });
 
-  node.classList.add('rwkvOfflineTarget');
-  if (state.inspecting) node.classList.add('rwkvInspecting');
+  node.classList.add(rwkvClass.offlineTarget);
+  if (state.inspecting) node.classList.add(rwkvClass.inspecting);
   const breakLineHappened = checkBreakLineHappened(node);
   const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 
   const loadingSpinner = document.createElement('span');
-  if (node.querySelector('.rwkvLoadingSpinner') === null) {
-    loadingSpinner.classList.add('rwkvLoadingSpinner');
-    if (state.inspecting) loadingSpinner.classList.add('rwkvInspecting');
+  if (node.querySelector(`.${rwkvClass.loadingSpinner}`) === null) {
+    loadingSpinner.classList.add(rwkvClass.loadingSpinner);
+    if (state.inspecting) loadingSpinner.classList.add(rwkvClass.inspecting);
     node.appendChild(loadingSpinner);
   }
 
   const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
-  nodeToBeAdded.classList.add('rwkvOfflineTranslationResult');
-  if (state.inspecting) nodeToBeAdded.classList.add('rwkvInspecting');
+  nodeToBeAdded.classList.add(rwkvClass.offlineTranslationResult);
+  if (state.inspecting) nodeToBeAdded.classList.add(rwkvClass.inspecting);
   const priority = getPriority(node);
   tick++;
   queryTranslation({ source: textContent, logic: 'translate', url: currentUrl, nodeName, priority, tick })
     .then(json => {
-      if (node.classList.contains('rwkvOfflineTranslationDone')) return;
+      if (node.classList.contains(rwkvClass.offlineTranslationDone)) return;
 
       const { translation, source } = json.body;
       if (translation && translation !== source) {
@@ -181,8 +181,8 @@ export const parseNode = (_node: Node): boolean => {
         if (!breakLineHappened) inner = ' ' + inner;
         nodeToBeAdded.textContent = inner;
         node.appendChild(nodeToBeAdded);
-        node.classList.add('rwkvOfflineTranslationDone');
-        if (state.inspecting) node.classList.add('rwkvInspecting');
+        node.classList.add(rwkvClass.offlineTranslationDone);
+        if (state.inspecting) node.classList.add(rwkvClass.inspecting);
       }
     })
     .finally(() => {

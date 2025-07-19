@@ -1,7 +1,7 @@
 import { injectCss } from './injectcss';
 import { parseNode } from './parseNode';
 import { state } from './state';
-import { ignoreHref } from '@extension/shared';
+import { ignoreHref, rwkvClass, rwkvEvent } from '@extension/shared';
 import type { AllMessage } from '@extension/shared';
 
 export const contentStart = () => {
@@ -16,43 +16,43 @@ export const contentStart = () => {
     state.running = running;
     const inspectingChanged = state.inspecting !== inspecting;
     state.inspecting = inspecting;
-    console.log('state-changed: content', state);
+    console.log(`${rwkvEvent.stateChanged}: content`, state);
 
     if (inspectingChanged) {
       console.log('inspectingChanged', inspecting);
-      document.body.querySelectorAll('.rwkvOfflineTarget').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkvInspecting')) {
-          node.classList.add('rwkvInspecting');
-        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
-          node.classList.remove('rwkvInspecting');
+      document.body.querySelectorAll(`.${rwkvClass.offlineTarget}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.add(rwkvClass.inspecting);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.remove(rwkvClass.inspecting);
         }
       });
-      document.body.querySelectorAll('.rwkvOfflineTranslationDone').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkvInspecting')) {
-          node.classList.add('rwkvInspecting');
-        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
-          node.classList.remove('rwkvInspecting');
+      document.body.querySelectorAll(`.${rwkvClass.offlineTranslationDone}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.add(rwkvClass.inspecting);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.remove(rwkvClass.inspecting);
         }
       });
-      document.body.querySelectorAll('.rwkvOfflineTranslationResult').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkvInspecting')) {
-          node.classList.add('rwkvInspecting');
-        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
-          node.classList.remove('rwkvInspecting');
+      document.body.querySelectorAll(`.${rwkvClass.offlineTranslationResult}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.add(rwkvClass.inspecting);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.remove(rwkvClass.inspecting);
         }
       });
-      document.body.querySelectorAll('.rwkvLoadingSpinner').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkvInspecting')) {
-          node.classList.add('rwkvInspecting');
-        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
-          node.classList.remove('rwkvInspecting');
+      document.body.querySelectorAll(`.${rwkvClass.loadingSpinner}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.add(rwkvClass.inspecting);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
+          node.classList.remove(rwkvClass.inspecting);
         }
       });
     }
 
     if (runningChanged) {
       if (!running) {
-        document.body.querySelectorAll('.rwkvLoadingSpinner').forEach(node => {
+        document.body.querySelectorAll(`.${rwkvClass.loadingSpinner}`).forEach(node => {
           node.remove();
         });
       } else {
@@ -75,7 +75,7 @@ export const contentStart = () => {
       case 'OnStateChanged': {
         console.log('content: 收到状态更新', message);
         // 触发自定义事件，让现有的监听器处理
-        document.dispatchEvent(new CustomEvent('state-changed', { detail: message }));
+        document.dispatchEvent(new CustomEvent(rwkvEvent.stateChanged, { detail: message }));
         break;
       }
       case 'QueryRequest':
@@ -91,7 +91,7 @@ export const contentStart = () => {
   // 添加消息监听器
   chrome.runtime.onMessage.addListener(handleMessage);
 
-  document.addEventListener('state-changed', handleStateChanged as EventListener);
+  document.addEventListener(rwkvEvent.stateChanged, handleStateChanged as EventListener);
 
   // 初始化时请求状态
   setTimeout(() => {
@@ -105,7 +105,7 @@ export const contentStart = () => {
 
   const handleMouseOver = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const isTarget = target.classList.contains('rwkvOfflineTarget');
+    const isTarget = target.classList.contains(rwkvClass.offlineTarget);
 
     if (isTarget && target && target.innerText) {
       const text = target.innerText.trim();

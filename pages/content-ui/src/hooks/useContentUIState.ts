@@ -1,4 +1,4 @@
-import { useStorage, ignoreHref } from '@extension/shared';
+import { useStorage, ignoreHref, rwkvEvent } from '@extension/shared';
 import { contentUIStateStorage } from '@extension/storage';
 import { useEffect, useState } from 'react';
 
@@ -29,10 +29,10 @@ export const useContentUIState = () => {
       }
     };
 
-    document.addEventListener('state-changed', handleStateChanged as EventListener);
+    document.addEventListener(rwkvEvent.stateChanged, handleStateChanged as EventListener);
 
     return () => {
-      document.removeEventListener('state-changed', handleStateChanged as EventListener);
+      document.removeEventListener(rwkvEvent.stateChanged, handleStateChanged as EventListener);
     };
   }, []);
 
