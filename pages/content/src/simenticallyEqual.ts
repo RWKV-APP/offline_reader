@@ -1,16 +1,18 @@
 /* eslint-disable arrow-body-style */
-const isComposedOfAllowedChars = (str: string): boolean => {
-  // 检查字符串是否只包含英文字母、特殊符号和空格
-  return /^[a-zA-Z\s!@#$%^&*()_+\-=\\[\]{};':"\\|,.<>\\/?`~]+$/.test(str);
+const normalizeString = (str: string): string => {
+  // 移除 @ 符号、空格、点号等特殊字符，并转换为小写
+  return str
+    .toLowerCase()
+    .replace(/[@\s\\.]/g, '') // 移除 @、空格、点号
+    .replace(/[^\w]/g, ''); // 只保留字母和数字
 };
 
 // 主要针对 x.com 的 user 和 hashtag
 export const simenticallyEqual = (a: string, b: string) => {
-  // 检查 a 和 b 是否都由英文字母、特殊符号和空格组成
-  const aIsValid = isComposedOfAllowedChars(a);
-  const bIsValid = isComposedOfAllowedChars(b);
+  const normalizedA = normalizeString(a);
+  const normalizedB = normalizeString(b);
 
-  const isEqual = aIsValid && bIsValid;
-
-  return isEqual;
+  return normalizedA === normalizedB;
 };
+
+//  ChatGPT 2.1 和 @chatgpt21 应该是相等的
