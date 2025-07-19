@@ -1,4 +1,4 @@
-import { forceBreakLineTagsUpper, forceBreakLineTags } from './handleNode';
+import { forceBreakLineTagsUpper, forceBreakLineTags } from './parseNode';
 
 export const checkBreakLineHappened = (node: HTMLElement) => {
   const computedStyle = window.getComputedStyle(node);

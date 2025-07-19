@@ -1,5 +1,5 @@
-import { handleNode } from './handleNode';
 import { injectCss } from './injectcss';
+import { parseNode } from './parseNode';
 import { state } from './state';
 import { ignoreHref } from '@extension/shared';
 import type { AllMessage } from '@extension/shared';
@@ -20,43 +20,43 @@ export const contentStart = () => {
 
     if (inspectingChanged) {
       console.log('inspectingChanged', inspecting);
-      document.body.querySelectorAll('.rwkv_offline_target').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkv_inspecting')) {
-          node.classList.add('rwkv_inspecting');
-        } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
-          node.classList.remove('rwkv_inspecting');
+      document.body.querySelectorAll('.rwkvOfflineTarget').forEach(node => {
+        if (inspecting && !node.classList.contains('rwkvInspecting')) {
+          node.classList.add('rwkvInspecting');
+        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
+          node.classList.remove('rwkvInspecting');
         }
       });
-      document.body.querySelectorAll('.rwkv_offline_translation_done').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkv_inspecting')) {
-          node.classList.add('rwkv_inspecting');
-        } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
-          node.classList.remove('rwkv_inspecting');
+      document.body.querySelectorAll('.rwkvOfflineTranslationDone').forEach(node => {
+        if (inspecting && !node.classList.contains('rwkvInspecting')) {
+          node.classList.add('rwkvInspecting');
+        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
+          node.classList.remove('rwkvInspecting');
         }
       });
-      document.body.querySelectorAll('.rwkv_offline_translation_result').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkv_inspecting')) {
-          node.classList.add('rwkv_inspecting');
-        } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
-          node.classList.remove('rwkv_inspecting');
+      document.body.querySelectorAll('.rwkvOfflineTranslationResult').forEach(node => {
+        if (inspecting && !node.classList.contains('rwkvInspecting')) {
+          node.classList.add('rwkvInspecting');
+        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
+          node.classList.remove('rwkvInspecting');
         }
       });
-      document.body.querySelectorAll('.rwkv_loading_spinner').forEach(node => {
-        if (inspecting && !node.classList.contains('rwkv_inspecting')) {
-          node.classList.add('rwkv_inspecting');
-        } else if (!inspecting && node.classList.contains('rwkv_inspecting')) {
-          node.classList.remove('rwkv_inspecting');
+      document.body.querySelectorAll('.rwkvLoadingSpinner').forEach(node => {
+        if (inspecting && !node.classList.contains('rwkvInspecting')) {
+          node.classList.add('rwkvInspecting');
+        } else if (!inspecting && node.classList.contains('rwkvInspecting')) {
+          node.classList.remove('rwkvInspecting');
         }
       });
     }
 
     if (runningChanged) {
       if (!running) {
-        document.body.querySelectorAll('.rwkv_loading_spinner').forEach(node => {
+        document.body.querySelectorAll('.rwkvLoadingSpinner').forEach(node => {
           node.remove();
         });
       } else {
-        document.body.querySelectorAll('*').forEach(handleNode);
+        document.body.querySelectorAll('*').forEach(parseNode);
       }
     }
   };
@@ -105,7 +105,7 @@ export const contentStart = () => {
 
   const handleMouseOver = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const isTarget = target.classList.contains('rwkv_offline_target');
+    const isTarget = target.classList.contains('rwkvOfflineTarget');
 
     if (isTarget && target && target.innerText) {
       const text = target.innerText.trim();
@@ -187,8 +187,8 @@ export const contentStart = () => {
         const addedNodes = Array.from(mutation.addedNodes);
         for (const addedNode of addedNodes) {
           if (addedNode.nodeType === 1) {
-            const shouldHandleChildNodes = handleNode(addedNode);
-            if (shouldHandleChildNodes) (addedNode as Element).querySelectorAll('*').forEach(handleNode);
+            const shouldHandleChildNodes = parseNode(addedNode);
+            if (shouldHandleChildNodes) (addedNode as Element).querySelectorAll('*').forEach(parseNode);
           }
         }
       }
