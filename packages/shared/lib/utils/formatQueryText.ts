@@ -9,8 +9,16 @@ export const formatQueryText = (text: string) => {
   const citationRegex = /\[[^\]]*\]/g;
   let _text = text.replace(citationRegex, '').trim();
   _text = _text.replace(/\n\n/g, '\n');
+
+  // 移除首尾的所有特殊符号（非字母数字和空格）
+  _text = _text
+    .replace(/^[^\w\s]+/, '')
+    .replace(/[^\w\s]+$/, '')
+    .trim();
+
   while (_text.includes('\n\n')) {
     _text = _text.replace('\n\n', '\n');
   }
+
   return _text;
 };
