@@ -1,7 +1,8 @@
+import { DashboardEntry } from './DashboardEntry';
 import { SideButton } from './SideButton';
 import { ignoreHref } from '@extension/shared';
 import { useState, useEffect } from 'react';
-import { FaPlay, FaStop, FaEye, FaEyeSlash, FaMousePointer, FaExpand, FaBan, FaDesktop, FaBug } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaMousePointer, FaExpand, FaBan, FaDesktop, FaBug } from 'react-icons/fa';
 import type { SetState } from '@extension/shared';
 import type React from 'react';
 
@@ -96,14 +97,13 @@ export const Dashboard: React.FC = () => {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingTop: 0,
+    justifyContent: 'flex-start',
+    paddingTop: '10%',
     paddingBottom: 0,
     paddingLeft: 0,
     paddingRight: 0,
-    gap: '4px',
     userSelect: 'none',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    // backgroundColor: 'rgba(0, 0, 0, 0.1)',
   };
 
   // 计算是否应该显示其他状态项
@@ -112,9 +112,8 @@ export const Dashboard: React.FC = () => {
   return (
     <div style={dashboardStyle}>
       <div onMouseEnter={() => setHoverd(true)} onMouseLeave={() => setHoverd(false)}>
-        <SideButton
-          icon={running ? <FaPlay /> : <FaStop />}
-          title="??"
+        <DashboardEntry
+          title="RWKV"
           value={running ? '运行中' : '未运行'}
           style={{
             transform: shouldShowOthers || hoverd ? 'translateX(0)' : 'translateX(67%)',
@@ -130,6 +129,7 @@ export const Dashboard: React.FC = () => {
           flexDirection: 'column',
           gap: '4px',
           pointerEvents: shouldShowOthers ? 'auto' : 'none',
+          paddingTop: '4px',
         }}
         onMouseEnter={() => setHoveringOthers(true)}
         onMouseLeave={() => setHoveringOthers(false)}>

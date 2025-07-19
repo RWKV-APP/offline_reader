@@ -1,4 +1,4 @@
-import { Dashboard } from './Dashboard';
+import { Dashboard } from '../../Dashboard';
 import { formatQueryText } from '@extension/shared';
 import { useEffect, useState } from 'react';
 
