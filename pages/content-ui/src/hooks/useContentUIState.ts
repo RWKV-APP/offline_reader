@@ -62,15 +62,15 @@ export const useContentUIState = () => {
     hovered,
     hoveringOthers,
 
-    // UI状态计算属性 - 诊断模式开启时保持显示
-    shouldShowOthers: hovered || hoveringOthers || globalState.inspecting,
+    // UI状态计算属性 - 诊断模式或HUD诊断模式开启时保持显示
+    shouldShowOthers: hovered || hoveringOthers || globalState.inspecting || globalState.showBBox,
 
     // 调试信息
     debug: {
       globalState,
       hovered,
       hoveringOthers,
-      shouldShowOthers: hovered || hoveringOthers || globalState.inspecting,
+      shouldShowOthers: hovered || hoveringOthers || globalState.inspecting || globalState.showBBox,
     },
 
     // 全局操作方法

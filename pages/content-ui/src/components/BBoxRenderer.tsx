@@ -130,7 +130,7 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
         return (
           <div
             key={`${position.id}-${index}`}
-            className="pointer-events-none absolute border-2"
+            className="pointer-events-none absolute"
             style={{
               left: style.left,
               top: style.top,
@@ -140,7 +140,7 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
               backgroundColor: style.backgroundColor,
               zIndex: style.zIndex,
               borderRadius: '2px',
-              transition: 'all 0.1s',
+              // transition: 'all 0.1s',
               // 确保边框可见
               borderWidth: '1px',
               borderStyle: 'solid',
