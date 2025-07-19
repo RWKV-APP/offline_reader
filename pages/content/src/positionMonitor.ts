@@ -123,15 +123,6 @@ const updatePositionCache = (positions: ElementPosition[]) => {
 // 发送位置同步消息
 const sendPositionSync = (positions: ElementPosition[]) => {
   try {
-    // 调试模式：在控制台显示位置信息
-    if (process.env.NODE_ENV === 'development') {
-      console.log('位置同步:', {
-        count: positions.length,
-        positions: positions.slice(0, 5), // 只显示前5个
-        timestamp: new Date().toISOString(),
-      });
-    }
-
     chrome.runtime.sendMessage({
       func: 'PositionSync',
       body: {
@@ -211,7 +202,6 @@ export const startPositionMonitoring = () => {
 
   // 检查 HUD 诊断模式是否开启
   if (!state.showBBox) {
-    console.log('HUD 诊断模式未开启，跳过位置监听启动');
     return;
   }
 
@@ -226,8 +216,6 @@ export const startPositionMonitoring = () => {
 
   // 立即执行一次同步
   throttledSync();
-
-  console.log('位置监听已启动');
 };
 
 // 停止位置监听
@@ -254,8 +242,6 @@ export const stopPositionMonitoring = () => {
   }
 
   positionCache.clear();
-
-  console.log('位置监听已停止');
 };
 
 // 强制同步一次位置
@@ -285,5 +271,4 @@ export const createTestPosition = () => {
 
   // 直接发送测试位置
   sendPositionSync([testPosition]);
-  console.log('发送测试位置:', testPosition);
 };

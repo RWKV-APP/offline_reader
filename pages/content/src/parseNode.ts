@@ -30,16 +30,11 @@ export const parseNode = (_node: Node): boolean => {
   const checking = checkingTypes.includes(nodeName);
 
   if (!state.running) {
-    // if (checking) console.log({ nodeName, running: state.running });
     return false;
   }
 
-  // if (checking) console.log({ nodeName, step: 0 });
-
   const parentNode = node.parentElement;
   if (!parentNode) return false;
-
-  // if (checking) console.log({ nodeName, step: 1 });
 
   const parentNodeName = parentNode.nodeName;
 
@@ -48,16 +43,10 @@ export const parseNode = (_node: Node): boolean => {
     if (closest) return false;
   }
 
-  // if (checking) console.log({ nodeName, step: 2 });
-
   if (parentNode.classList.contains('rwkvOfflineTarget')) return false;
-
-  // if (checking) console.log({ nodeName, step: 3 });
 
   // 如果父节点不需要处理
   if (ignoreTypes.includes(parentNodeName)) return false;
-
-  // if (checking) console.log({ nodeName, step: 4 });
 
   // 过滤掉不需要处理的节点
   if (ignoreTypes.includes(nodeName)) return false;
@@ -70,8 +59,6 @@ export const parseNode = (_node: Node): boolean => {
   // 不处理汉语, 因为当前的模型就是汉语
   if (isChinese(textContent)) return false;
   if (isUrl(textContent)) return false;
-
-  // if (checking) console.log({ nodeName, step: 5 });
 
   // 只包含符号和数字
   const isOnlySymbolsAndNumbers = /^[0-9\s\p{P}]+$/u.test(textContent);
@@ -88,8 +75,6 @@ export const parseNode = (_node: Node): boolean => {
     return false;
   }
 
-  // if (checking) console.log({ nodeName, step: 6 });
-
   if (parentNode?.parentElement) {
     const parentComputedStyle = window.getComputedStyle(parentNode.parentElement);
     if (
@@ -100,8 +85,6 @@ export const parseNode = (_node: Node): boolean => {
       return false;
     }
   }
-
-  // if (checking) console.log({ nodeName, step: 7 });
 
   if (parentNode) {
     const parentComputedStyle = window.getComputedStyle(parentNode);
@@ -120,11 +103,7 @@ export const parseNode = (_node: Node): boolean => {
     return true;
   }
 
-  // if (checking) console.log({ nodeName, step: 8 });
-
   if (node.classList.contains(rwkvClass.done)) return false;
-
-  // if (checking) console.log({ nodeName, step: 9 });
 
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
   let nonTextChildNodesTextContent = '';
@@ -149,23 +128,12 @@ export const parseNode = (_node: Node): boolean => {
       if (hasText) notEmptyTextChildNodesCount++;
     }
   }
-  // if (checking) console.log({ nodeName, step: 10, notEmptyTextChildNodesCount, nonTextChildNodesTextContent });
 
   if (notEmptyTextChildNodesCount <= 0) return true;
-
-  // if (checking) console.log({ nodeName, step: 11 });
 
   node.classList.add(rwkvClass.target);
   if (state.inspecting) node.classList.add(rwkvClass.inspect);
 
-  // 调试日志
-  if (process.env.NODE_ENV === 'development') {
-    console.log('添加target类:', {
-      text: textContent?.slice(0, 50),
-      nodeName,
-      timestamp: new Date().toISOString(),
-    });
-  }
   const breakLineHappened = checkBreakLineHappened(node);
   const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 

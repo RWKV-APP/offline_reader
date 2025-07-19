@@ -59,17 +59,9 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
     (event: CustomEvent) => {
       const { positions: newPositions } = event.detail;
 
-      // 调试信息
-      console.log('BBoxRenderer: 收到位置同步', {
-        enabled,
-        count: newPositions.length,
-        positions: newPositions.slice(0, 3), // 只显示前3个
-      });
-
       // 性能优化：只在位置真正变化时更新状态
       setPositions(prevPositions => {
         if (prevPositions.length !== newPositions.length) {
-          console.log('BBoxRenderer: 位置数量变化', { from: prevPositions.length, to: newPositions.length });
           return newPositions;
         }
 
@@ -86,7 +78,6 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
             newPos.rect.width !== prevPos.rect.width ||
             newPos.rect.height !== prevPos.rect.height
           ) {
-            console.log('BBoxRenderer: 位置内容变化', { index: i, newPos, prevPos });
             return newPositions;
           }
         }
@@ -98,8 +89,6 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
   );
 
   useEffect(() => {
-    console.log('BBoxRenderer: useEffect', { enabled, positionsCount: positions.length });
-
     if (!enabled) {
       setPositions([]);
       return;
@@ -114,13 +103,7 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
     };
   }, [enabled, handlePositionSync]);
 
-  // 调试信息
-  console.log('BBoxRenderer: 渲染状态', { enabled, positionsCount: positions.length, positions });
-
-  if (!enabled || positions.length === 0) {
-    console.log('BBoxRenderer: 不渲染', { enabled, positionsCount: positions.length });
-    return null;
-  }
+  if (!enabled || positions.length === 0) return null;
 
   return (
     <>

@@ -15,7 +15,6 @@ export const useContentUIState = () => {
     const handleStateChanged = (event: CustomEvent) => {
       try {
         const { running, interactionMode, demoMode, inspecting, showBBox } = event.detail;
-        console.log('content-ui: 收到状态更新', { running, interactionMode, demoMode, inspecting, showBBox });
 
         // 只更新从 background 传来的状态，保持本地状态不变
         contentUIStateStorage.updateGlobalState({
@@ -42,7 +41,6 @@ export const useContentUIState = () => {
   useEffect(() => {
     const initializeState = async () => {
       try {
-        console.log('content-ui: 初始化状态');
         chrome.runtime.sendMessage({ func: 'GetState' });
       } catch (error) {
         console.error('Error sending GetState message:', error);
@@ -76,7 +74,6 @@ export const useContentUIState = () => {
     // 全局操作方法
     toggleInteractionMode: () => {
       try {
-        console.log('content-ui: 切换交互模式');
         contentUIStateStorage.toggleInteractionMode();
       } catch (error) {
         console.error('Error toggling interaction mode:', error);
@@ -84,7 +81,6 @@ export const useContentUIState = () => {
     },
     toggleDemoMode: () => {
       try {
-        console.log('content-ui: 切换演示模式');
         contentUIStateStorage.toggleDemoMode();
       } catch (error) {
         console.error('Error toggling demo mode:', error);
@@ -92,7 +88,6 @@ export const useContentUIState = () => {
     },
     toggleDiagnoseMode: () => {
       try {
-        console.log('content-ui: 切换诊断模式');
         contentUIStateStorage.toggleDiagnoseMode();
       } catch (error) {
         console.error('Error toggling diagnose mode:', error);
@@ -100,7 +95,6 @@ export const useContentUIState = () => {
     },
     toggleBBox: () => {
       try {
-        console.log('content-ui: 切换HUD诊断模式', { currentState: globalState.showBBox });
         contentUIStateStorage.toggleBBox();
       } catch (error) {
         console.error('Error toggling HUD diagnose mode:', error);

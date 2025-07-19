@@ -1,19 +1,8 @@
 import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
 import { ignoreHref } from '@extension/shared';
-import { exampleThemeStorage, translationModeStorage, contentUIStateStorage } from '@extension/storage';
-import type { AllMessage, QueryResponse, State, ElementPosition } from '@extension/shared';
-
-console.log('Background loaded');
-console.log("Edit 'chrome-extension/src/background/index.ts' and save to reload.");
-
-exampleThemeStorage.get().then(theme => {
-  console.log('theme', theme);
-});
-
-translationModeStorage.get().then(mode => {
-  console.log('mode', mode);
-});
+import { contentUIStateStorage } from '@extension/storage';
+import type { AllMessage, QueryResponse, State } from '@extension/shared';
 
 const WS_PORT = 52346;
 const WS_URL = `ws://localhost:${WS_PORT}/ws`;
@@ -38,9 +27,7 @@ const state: State = {
 // 从 storage 中恢复状态
 const initializeStateFromStorage = async () => {
   try {
-    console.log('background: 从 storage 中恢复状态');
     const storedState = await contentUIStateStorage.get();
-    console.log('background: 恢复的状态', storedState);
 
     // 更新状态，但保持 running 状态为 false（需要 WebSocket 连接）
     state.interactionMode = storedState.interactionMode;
@@ -49,10 +36,8 @@ const initializeStateFromStorage = async () => {
     state.showBBox = storedState.showBBox;
     state.ignored = storedState.ignored;
     state.running = false; // 初始时设为 false，等 WebSocket 连接成功后再设为 true
-
-    console.log('background: 状态已恢复', state);
-  } catch (error) {
-    console.error('background: 恢复状态失败', error);
+  } catch (e) {
+    console.error(e);
   }
 };
 
@@ -99,7 +84,6 @@ const listenMessageForUI = (
         return true;
       }
       case 'GetState': {
-        console.log('Background.Send: GetStateResponse', state);
         sendResponse({
           func: 'GetStateResponse',
           ...state,
@@ -109,7 +93,6 @@ const listenMessageForUI = (
       }
       case 'SetState': {
         const { interactionMode, demoMode, inspecting, showBBox } = message;
-        console.log('background: 收到 SetState', { interactionMode, demoMode, inspecting, showBBox });
 
         state.interactionMode = interactionMode;
         state.demoMode = demoMode;
@@ -150,7 +133,7 @@ const listenMessageForUI = (
               body: { positions, tabId: actualTabId },
             });
           } catch (e) {
-            console.warn('background: 转发位置同步消息失败', e);
+            console.error(e);
           }
         }
 
@@ -186,7 +169,6 @@ const connectWebSocket = () => {
     return;
   }
 
-  console.log('🔌 尝试连接 WebSocket...');
   isConnecting = true;
   let success = false;
 
@@ -194,7 +176,6 @@ const connectWebSocket = () => {
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
-      console.log('✅ WebSocket 已连接');
       isConnecting = false;
       ws?.send(JSON.stringify({ type: 'ping' }));
       state.running = true;

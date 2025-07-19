@@ -6,13 +6,9 @@ import type { FC } from 'react';
 export const BBox: FC<{
   style?: React.CSSProperties;
 }> = ({ style }) => {
-  const { showBBox, toggleBBox, debug } = useContentUIState();
-
-  // 调试信息
-  console.log('BBox: 状态', { showBBox, debug });
+  const { showBBox, toggleBBox } = useContentUIState();
 
   const handleClick = () => {
-    console.log('BBox: 点击事件触发', { currentState: showBBox });
     toggleBBox();
   };
 

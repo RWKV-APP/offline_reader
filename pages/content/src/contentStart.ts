@@ -19,10 +19,8 @@ export const contentStart = () => {
     state.inspecting = inspecting;
     const showBBoxChanged = state.showBBox !== showBBox;
     state.showBBox = showBBox;
-    console.log(`${rwkvEvent.stateChanged}: content`, state);
 
     if (inspectingChanged) {
-      console.log('inspectingChanged', inspecting);
       document.body.querySelectorAll(`.${rwkvClass.target}`).forEach(node => {
         if (inspecting && !node.classList.contains(rwkvClass.inspect)) {
           node.classList.add(rwkvClass.inspect);
@@ -67,7 +65,6 @@ export const contentStart = () => {
 
         // 测试：3秒后发送一个测试位置
         setTimeout(() => {
-          console.log('发送测试位置...');
           createTestPosition();
         }, 3000);
       }
@@ -76,13 +73,11 @@ export const contentStart = () => {
     // 处理 HUD 诊断模式状态变化
     if (showBBoxChanged) {
       if (showBBox) {
-        console.log('HUD 诊断模式已开启');
         // 如果 WebSocket 已连接，启动位置监听
         if (state.running) {
           startPositionMonitoring();
         }
       } else {
-        console.log('HUD 诊断模式已关闭');
         // 停止位置监听
         stopPositionMonitoring();
       }
@@ -95,13 +90,10 @@ export const contentStart = () => {
     sender: chrome.runtime.MessageSender,
     sendResponse: (response?: any) => void,
   ) => {
-    console.log('content: 收到消息', message.func);
-
     const { func } = message;
     switch (func) {
       case 'GetStateResponse':
       case 'OnStateChanged': {
-        console.log('content: 收到状态更新', message);
         // 触发自定义事件，让现有的监听器处理
         document.dispatchEvent(new CustomEvent(rwkvEvent.stateChanged, { detail: message }));
         break;
@@ -125,7 +117,6 @@ export const contentStart = () => {
 
   // 初始化时请求状态
   setTimeout(() => {
-    console.log('content: 请求初始状态');
     try {
       chrome.runtime.sendMessage({ func: 'GetState' });
     } catch (error) {
@@ -173,7 +164,6 @@ export const contentStart = () => {
 
   const initializeHoverListener = () => {
     document.addEventListener('mouseover', handleMouseOver);
-    console.log('Hover listener initialized (event dispatch only).');
   };
 
   // Initialize the hover listener
@@ -198,7 +188,6 @@ export const contentStart = () => {
   const initializeKeyListeners = () => {
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
-    console.log('Key listeners initialized.');
   };
 
   // Initialize the key listener

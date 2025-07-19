@@ -39,8 +39,6 @@ export const contentUIStateStorage: ContentUIStorageType = {
       const nextIndex = (currentIndex + 1) % modes.length;
       const newMode = modes[nextIndex];
 
-      console.log('storage: 切换交互模式', { from: currentState.interactionMode, to: newMode });
-
       // Update local state
       await storage.set(prev => ({
         ...prev,
@@ -66,8 +64,6 @@ export const contentUIStateStorage: ContentUIStorageType = {
     try {
       const currentState = await storage.get();
       const newDemoMode = !currentState.demoMode;
-
-      console.log('storage: 切换演示模式', { from: currentState.demoMode, to: newDemoMode });
 
       // Update local state
       await storage.set(prev => ({
@@ -95,8 +91,6 @@ export const contentUIStateStorage: ContentUIStorageType = {
       const currentState = await storage.get();
       const newInspecting = !currentState.inspecting;
 
-      console.log('storage: 切换诊断模式', { from: currentState.inspecting, to: newInspecting });
-
       // Update local state
       await storage.set(prev => ({
         ...prev,
@@ -122,8 +116,6 @@ export const contentUIStateStorage: ContentUIStorageType = {
       const currentState = await storage.get();
       const newShowBBox = !currentState.showBBox;
 
-      console.log('storage: 切换HUD诊断模式', { from: currentState.showBBox, to: newShowBBox });
-
       // Update local state
       await storage.set(prev => ({
         ...prev,
@@ -146,7 +138,6 @@ export const contentUIStateStorage: ContentUIStorageType = {
 
   updateGlobalState: async globalState => {
     try {
-      console.log('storage: 更新全局状态', globalState);
       await storage.set(prev => ({
         ...prev,
         ...globalState,

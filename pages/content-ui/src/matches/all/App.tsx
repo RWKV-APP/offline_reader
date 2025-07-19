@@ -17,7 +17,6 @@ export default function App() {
   const { showBBox } = useStorage(contentUIStateStorage);
 
   // 调试信息
-  console.log('App: showBBox状态', { showBBox });
 
   const [highlighterStyle, setHighlighterStyle] = useState<HighlighterStyle>({
     display: 'none',

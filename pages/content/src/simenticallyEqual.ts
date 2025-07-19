@@ -11,8 +11,6 @@ export const simenticallyEqual = (a: string, b: string) => {
   const bIsValid = isComposedOfAllowedChars(b);
 
   const isEqual = aIsValid && bIsValid;
-  if (isEqual) {
-    console.log({ a, b }, isEqual);
-  }
+
   return isEqual;
 };
