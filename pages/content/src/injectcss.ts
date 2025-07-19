@@ -49,16 +49,6 @@ export const injectCss = () => {
   background-color: rgba(0, 255, 0, 0.5) !important;
   outline: 1px solid rgba(0, 255, 0, 1) !important;
 }
-
-
-.rwkvOfflineWrapper {
-  /*  */
-}
-
-.rwkvOfflineWrapper.rwkvInspecting {
-  background-color: rgba(255, 0, 0, 0.5) !important;
-  outline: 1px solid rgba(255, 0, 0, 1) !important;
-}
 `;
   document.head.appendChild(style);
 };

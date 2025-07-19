@@ -20,39 +20,39 @@ export const contentStart = () => {
 
     if (inspectingChanged) {
       console.log('inspectingChanged', inspecting);
-      document.body.querySelectorAll(`.${rwkvClass.offlineTarget}`).forEach(node => {
-        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.add(rwkvClass.inspecting);
-        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.remove(rwkvClass.inspecting);
+      document.body.querySelectorAll(`.${rwkvClass.target}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspect)) {
+          node.classList.add(rwkvClass.inspect);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspect)) {
+          node.classList.remove(rwkvClass.inspect);
         }
       });
-      document.body.querySelectorAll(`.${rwkvClass.offlineTranslationDone}`).forEach(node => {
-        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.add(rwkvClass.inspecting);
-        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.remove(rwkvClass.inspecting);
+      document.body.querySelectorAll(`.${rwkvClass.done}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspect)) {
+          node.classList.add(rwkvClass.inspect);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspect)) {
+          node.classList.remove(rwkvClass.inspect);
         }
       });
-      document.body.querySelectorAll(`.${rwkvClass.offlineTranslationResult}`).forEach(node => {
-        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.add(rwkvClass.inspecting);
-        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.remove(rwkvClass.inspecting);
+      document.body.querySelectorAll(`.${rwkvClass.result}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspect)) {
+          node.classList.add(rwkvClass.inspect);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspect)) {
+          node.classList.remove(rwkvClass.inspect);
         }
       });
-      document.body.querySelectorAll(`.${rwkvClass.loadingSpinner}`).forEach(node => {
-        if (inspecting && !node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.add(rwkvClass.inspecting);
-        } else if (!inspecting && node.classList.contains(rwkvClass.inspecting)) {
-          node.classList.remove(rwkvClass.inspecting);
+      document.body.querySelectorAll(`.${rwkvClass.spinner}`).forEach(node => {
+        if (inspecting && !node.classList.contains(rwkvClass.inspect)) {
+          node.classList.add(rwkvClass.inspect);
+        } else if (!inspecting && node.classList.contains(rwkvClass.inspect)) {
+          node.classList.remove(rwkvClass.inspect);
         }
       });
     }
 
     if (runningChanged) {
       if (!running) {
-        document.body.querySelectorAll(`.${rwkvClass.loadingSpinner}`).forEach(node => {
+        document.body.querySelectorAll(`.${rwkvClass.spinner}`).forEach(node => {
           node.remove();
         });
       } else {
@@ -105,7 +105,7 @@ export const contentStart = () => {
 
   const handleMouseOver = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    const isTarget = target.classList.contains(rwkvClass.offlineTarget);
+    const isTarget = target.classList.contains(rwkvClass.target);
 
     if (isTarget && target && target.innerText) {
       const text = target.innerText.trim();

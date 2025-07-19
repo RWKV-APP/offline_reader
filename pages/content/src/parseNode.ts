@@ -122,7 +122,7 @@ export const parseNode = (_node: Node): boolean => {
 
   // if (checking) console.log({ nodeName, step: 8 });
 
-  if (node.classList.contains(rwkvClass.offlineTranslationDone)) return false;
+  if (node.classList.contains(rwkvClass.done)) return false;
 
   // if (checking) console.log({ nodeName, step: 9 });
 
@@ -155,26 +155,26 @@ export const parseNode = (_node: Node): boolean => {
 
   // if (checking) console.log({ nodeName, step: 11 });
 
-  node.classList.add(rwkvClass.offlineTarget);
-  if (state.inspecting) node.classList.add(rwkvClass.inspecting);
+  node.classList.add(rwkvClass.target);
+  if (state.inspecting) node.classList.add(rwkvClass.inspect);
   const breakLineHappened = checkBreakLineHappened(node);
   const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 
   const loadingSpinner = document.createElement('span');
-  if (node.querySelector(`.${rwkvClass.loadingSpinner}`) === null) {
-    loadingSpinner.classList.add(rwkvClass.loadingSpinner);
-    if (state.inspecting) loadingSpinner.classList.add(rwkvClass.inspecting);
+  if (node.querySelector(`.${rwkvClass.spinner}`) === null) {
+    loadingSpinner.classList.add(rwkvClass.spinner);
+    if (state.inspecting) loadingSpinner.classList.add(rwkvClass.inspect);
     node.appendChild(loadingSpinner);
   }
 
   const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
-  nodeToBeAdded.classList.add(rwkvClass.offlineTranslationResult);
-  if (state.inspecting) nodeToBeAdded.classList.add(rwkvClass.inspecting);
+  nodeToBeAdded.classList.add(rwkvClass.result);
+  if (state.inspecting) nodeToBeAdded.classList.add(rwkvClass.inspect);
   const priority = getPriority(node);
   tick++;
   queryTranslation({ source: textContent, logic: 'translate', url: currentUrl, nodeName, priority, tick })
     .then(json => {
-      if (node.classList.contains(rwkvClass.offlineTranslationDone)) return;
+      if (node.classList.contains(rwkvClass.done)) return;
 
       const { translation, source } = json.body;
       if (!translation) return;
@@ -186,18 +186,17 @@ export const parseNode = (_node: Node): boolean => {
       nodeToBeAdded.textContent = inner;
 
       if (state.inspecting) {
-        if (!nodeToBeAdded.classList.contains(rwkvClass.inspecting)) nodeToBeAdded.classList.add(rwkvClass.inspecting);
+        if (!nodeToBeAdded.classList.contains(rwkvClass.inspect)) nodeToBeAdded.classList.add(rwkvClass.inspect);
       } else {
-        if (nodeToBeAdded.classList.contains(rwkvClass.inspecting))
-          nodeToBeAdded.classList.remove(rwkvClass.inspecting);
+        if (nodeToBeAdded.classList.contains(rwkvClass.inspect)) nodeToBeAdded.classList.remove(rwkvClass.inspect);
       }
 
       node.appendChild(nodeToBeAdded);
-      node.classList.add(rwkvClass.offlineTranslationDone);
+      node.classList.add(rwkvClass.done);
       if (state.inspecting) {
-        if (!node.classList.contains(rwkvClass.inspecting)) node.classList.add(rwkvClass.inspecting);
+        if (!node.classList.contains(rwkvClass.inspect)) node.classList.add(rwkvClass.inspect);
       } else {
-        if (node.classList.contains(rwkvClass.inspecting)) node.classList.remove(rwkvClass.inspecting);
+        if (node.classList.contains(rwkvClass.inspect)) node.classList.remove(rwkvClass.inspect);
       }
     })
     .finally(() => {
