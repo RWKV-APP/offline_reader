@@ -1,5 +1,6 @@
 import { checkBreakLineHappened } from './checkBreakLineHappened';
 import { getPriority } from './getPriority';
+import { simenticallyEqual } from './simenticallyEqual';
 import { state } from './state';
 import { formatTranslation, ignoreHref, isChinese, isUrl, queryTranslation, rwkvClass } from '@extension/shared';
 
@@ -176,19 +177,31 @@ export const parseNode = (_node: Node): boolean => {
       if (node.classList.contains(rwkvClass.offlineTranslationDone)) return;
 
       const { translation, source } = json.body;
-      if (translation && translation !== source) {
-        let inner = formatTranslation(translation);
-        if (!breakLineHappened) inner = ' ' + inner;
-        nodeToBeAdded.textContent = inner;
-        node.appendChild(nodeToBeAdded);
-        node.classList.add(rwkvClass.offlineTranslationDone);
-        if (state.inspecting) node.classList.add(rwkvClass.inspecting);
+      if (!translation) return;
+      const translationHasNoDifference = simenticallyEqual(translation, source);
+      if (translationHasNoDifference) return;
+
+      let inner = formatTranslation(translation);
+      if (!breakLineHappened) inner = ' ' + inner;
+      nodeToBeAdded.textContent = inner;
+
+      if (state.inspecting) {
+        if (!nodeToBeAdded.classList.contains(rwkvClass.inspecting)) nodeToBeAdded.classList.add(rwkvClass.inspecting);
+      } else {
+        if (nodeToBeAdded.classList.contains(rwkvClass.inspecting))
+          nodeToBeAdded.classList.remove(rwkvClass.inspecting);
+      }
+
+      node.appendChild(nodeToBeAdded);
+      node.classList.add(rwkvClass.offlineTranslationDone);
+      if (state.inspecting) {
+        if (!node.classList.contains(rwkvClass.inspecting)) node.classList.add(rwkvClass.inspecting);
+      } else {
+        if (node.classList.contains(rwkvClass.inspecting)) node.classList.remove(rwkvClass.inspecting);
       }
     })
     .finally(() => {
-      if (loadingSpinner.parentElement === node) {
-        loadingSpinner.remove();
-      }
+      if (loadingSpinner.parentElement === node) loadingSpinner.remove();
     });
 
   return true;
