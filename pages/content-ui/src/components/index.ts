@@ -6,3 +6,4 @@ export { RunningStatus } from './RunningStatus';
 export { DemoMode } from './DemoMode';
 export { InteractionMode } from './InteractionMode';
 export { IgnoredStatus } from './IgnoredStatus';
+export { FeedbackButton } from './FeedbackButton';

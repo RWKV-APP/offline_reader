@@ -1,4 +1,12 @@
-import { BBox, DemoMode, DiagnoseMode, IgnoredStatus, InteractionMode, RunningStatus } from './components';
+import {
+  BBox,
+  DemoMode,
+  DiagnoseMode,
+  IgnoredStatus,
+  InteractionMode,
+  RunningStatus,
+  FeedbackButton,
+} from './components';
 import { DashboardEntry } from './DashboardEntry';
 import { useContentUIState } from './hooks/useContentUIState';
 import { useFullscreenDetection } from './hooks/useFullscreenDetection';
@@ -101,6 +109,7 @@ export const Dashboard: FC = () => {
         <DemoMode style={widgetAnimationStyle} />
         <DiagnoseMode style={widgetAnimationStyle} />
         <BBox style={widgetAnimationStyle} />
+        <FeedbackButton style={widgetAnimationStyle} />
       </div>
     </div>
   );
