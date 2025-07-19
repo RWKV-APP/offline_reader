@@ -29,74 +29,97 @@ export const contentUIStateStorage: ContentUIStorageType = {
   ...storage,
 
   toggleInteractionMode: async () => {
-    const currentState = await storage.get();
-    const modes: ('hover' | 'full')[] = ['hover', 'full'];
-    const currentIndex = modes.indexOf(currentState.interactionMode);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    const newMode = modes[nextIndex];
+    try {
+      const currentState = await storage.get();
+      const modes: ('hover' | 'full')[] = ['hover', 'full'];
+      const currentIndex = modes.indexOf(currentState.interactionMode);
+      const nextIndex = (currentIndex + 1) % modes.length;
+      const newMode = modes[nextIndex];
 
-    // Update local state
-    await storage.set(prev => ({
-      ...prev,
-      interactionMode: newMode,
-      inspecting: false,
-    }));
+      console.log('storage: 切换交互模式', { from: currentState.interactionMode, to: newMode });
 
-    // Send message to background
-    const msg: SetState = {
-      func: 'SetState',
-      inspecting: false,
-      demoMode: currentState.demoMode,
-      interactionMode: newMode,
-    };
-    chrome.runtime.sendMessage(msg);
+      // Update local state
+      await storage.set(prev => ({
+        ...prev,
+        interactionMode: newMode,
+        inspecting: false,
+      }));
+
+      // Send message to background
+      const msg: SetState = {
+        func: 'SetState',
+        inspecting: false,
+        demoMode: currentState.demoMode,
+        interactionMode: newMode,
+      };
+      chrome.runtime.sendMessage(msg);
+    } catch (error) {
+      console.error('storage: 切换交互模式失败', error);
+    }
   },
 
   toggleDemoMode: async () => {
-    const currentState = await storage.get();
-    const newDemoMode = !currentState.demoMode;
+    try {
+      const currentState = await storage.get();
+      const newDemoMode = !currentState.demoMode;
 
-    // Update local state
-    await storage.set(prev => ({
-      ...prev,
-      demoMode: newDemoMode,
-      inspecting: false,
-    }));
+      console.log('storage: 切换演示模式', { from: currentState.demoMode, to: newDemoMode });
 
-    // Send message to background
-    const msg: SetState = {
-      func: 'SetState',
-      interactionMode: currentState.interactionMode,
-      demoMode: newDemoMode,
-      inspecting: false,
-    };
-    chrome.runtime.sendMessage(msg);
+      // Update local state
+      await storage.set(prev => ({
+        ...prev,
+        demoMode: newDemoMode,
+        inspecting: false,
+      }));
+
+      // Send message to background
+      const msg: SetState = {
+        func: 'SetState',
+        interactionMode: currentState.interactionMode,
+        demoMode: newDemoMode,
+        inspecting: false,
+      };
+      chrome.runtime.sendMessage(msg);
+    } catch (error) {
+      console.error('storage: 切换演示模式失败', error);
+    }
   },
 
   toggleDiagnoseMode: async () => {
-    const currentState = await storage.get();
-    const newInspecting = !currentState.inspecting;
+    try {
+      const currentState = await storage.get();
+      const newInspecting = !currentState.inspecting;
 
-    // Update local state
-    await storage.set(prev => ({
-      ...prev,
-      inspecting: newInspecting,
-    }));
+      console.log('storage: 切换诊断模式', { from: currentState.inspecting, to: newInspecting });
 
-    // Send message to background
-    const msg: SetState = {
-      func: 'SetState',
-      interactionMode: currentState.interactionMode,
-      demoMode: currentState.demoMode,
-      inspecting: newInspecting,
-    };
-    chrome.runtime.sendMessage(msg);
+      // Update local state
+      await storage.set(prev => ({
+        ...prev,
+        inspecting: newInspecting,
+      }));
+
+      // Send message to background
+      const msg: SetState = {
+        func: 'SetState',
+        interactionMode: currentState.interactionMode,
+        demoMode: currentState.demoMode,
+        inspecting: newInspecting,
+      };
+      chrome.runtime.sendMessage(msg);
+    } catch (error) {
+      console.error('storage: 切换诊断模式失败', error);
+    }
   },
 
   updateGlobalState: async globalState => {
-    await storage.set(prev => ({
-      ...prev,
-      ...globalState,
-    }));
+    try {
+      console.log('storage: 更新全局状态', globalState);
+      await storage.set(prev => ({
+        ...prev,
+        ...globalState,
+      }));
+    } catch (error) {
+      console.error('storage: 更新全局状态失败', error);
+    }
   },
 };

@@ -5,12 +5,13 @@ const onMessage = (
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) => {
-  console.log('onMessage: content-ui');
+  console.log('content-ui: 收到消息', message.func);
+
   const { func } = message;
   switch (func) {
     case 'GetStateResponse':
     case 'OnStateChanged': {
-      console.log('state-changed: content-ui', message);
+      console.log('content-ui: 状态变化', message);
       document.dispatchEvent(new CustomEvent('state-changed', { detail: message }));
       break;
     }
@@ -30,16 +31,22 @@ const onMessage = (
 };
 
 const stopListen = () => {
-  console.log('stopListen: content-ui');
+  console.log('content-ui: 停止监听消息');
   chrome.runtime.onMessage.removeListener(onMessage);
 };
 
 export const startListen = () => {
   stopListen();
-  console.log('startListen: content-ui');
+  console.log('content-ui: 开始监听消息');
   chrome.runtime.onMessage.addListener(onMessage);
+
+  // 延迟发送 GetState 消息，确保 background script 已准备就绪
   setTimeout(() => {
-    console.log('sendMessage: content-ui', { func: 'GetState' });
-    chrome.runtime.sendMessage({ func: 'GetState' });
+    console.log('content-ui: 发送 GetState 消息');
+    try {
+      chrome.runtime.sendMessage({ func: 'GetState' });
+    } catch (error) {
+      console.error('content-ui: 发送 GetState 消息失败', error);
+    }
   }, 500);
 };
