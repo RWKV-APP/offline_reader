@@ -24,6 +24,7 @@
     "@extension/env": "workspace:*",
     "@extension/i18n": "workspace:*",
     "@extension/shared": "workspace:*",
+    "@extension/storage": "workspace:*",
     "@extension/ui": "workspace:*",
     "react-icons": "^5.5.0"
   },

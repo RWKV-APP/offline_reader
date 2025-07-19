@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import type React from 'react';
 
-// --- Status Item Component ---
-export const SideButton: React.FC<{
+export const BaseWidget: React.FC<{
   icon: React.ReactNode;
   title: string;
   value: string;
@@ -49,6 +48,7 @@ export const SideButton: React.FC<{
     style.pointerEvents = 'auto';
     style.cursor = 'pointer';
   }
+
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div onClick={onClick} style={style}>

@@ -99,8 +99,6 @@ export default function App() {
   const width = highlighterStyle.width;
   const padding = 8;
 
-  // TODO: 顶部溢出
-
   return (
     <>
       <Dashboard />

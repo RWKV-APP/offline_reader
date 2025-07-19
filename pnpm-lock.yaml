@@ -271,9 +271,6 @@ importers:
         specifier: ^13.15.15
         version: 13.15.15
     devDependencies:
-      '@extension/storage':
-        specifier: workspace:*
-        version: link:../storage
       '@extension/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -412,6 +409,9 @@ importers:
       '@extension/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@extension/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@extension/ui':
         specifier: workspace:*
         version: link:../../packages/ui

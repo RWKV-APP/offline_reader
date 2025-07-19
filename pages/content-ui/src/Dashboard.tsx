@@ -1,91 +1,40 @@
 import { DashboardEntry } from './DashboardEntry';
-import { SideButton } from './SideButton';
-import { ignoreHref } from '@extension/shared';
-import { useState, useEffect } from 'react';
-import { FaEye, FaEyeSlash, FaMousePointer, FaExpand, FaBan, FaDesktop, FaBug } from 'react-icons/fa';
-import type { SetState } from '@extension/shared';
-import type React from 'react';
+import { DemoModeWidget } from './DemoModeWidget';
+import { DiagnoseModeWidget } from './DiagnoseModeWidget';
+import { useContentUIState } from './hooks/useContentUIState';
+import { IgnoredStatusWidget } from './IgnoredStatusWidget';
+import { InteractionModeWidget } from './InteractionModeWidget';
+import { useCallback } from 'react';
+import type { FC } from 'react';
 
-export const Dashboard: React.FC = () => {
-  // 是否运行中, websocket 是否处于链接状态?
-  const [running, setRunning] = useState(false);
-  // 页面是否被忽略
-  const [ignored, setIgnored] = useState(false);
-  // 页面交互模式
-  const [interactionMode, setInteractionMode] = useState<'hover' | 'full'>('hover');
-  // 演示模式
-  const [demoMode, setDemoMode] = useState(false);
-  // 是否显示其他状态项
-  const [hoverd, setHoverd] = useState(false);
-  // 是否正在hover其他状态项
-  const [hoveringOthers, setHoveringOthers] = useState(false);
+export const Dashboard: FC = () => {
+  const {
+    // 状态
+    hovered,
+    shouldShowOthers,
+    // 操作方法
+    setHovered,
+    setHoveringOthers,
+  } = useContentUIState();
 
-  const [inspecting, setInspecting] = useState(false);
+  // 简化的事件处理 - 确保状态互斥
+  const handleEntryMouseEnter = useCallback(() => {
+    setHovered(true);
+    setHoveringOthers(false); // 确保互斥
+  }, [setHovered, setHoveringOthers]);
 
-  useEffect(() => {
-    const handleRunningUpdate = (event: CustomEvent) => {
-      setRunning(event.detail.running);
-      setIgnored(ignoreHref.some(href => window.location.href.startsWith(href)));
-      setInteractionMode(event.detail.interactionMode);
-      setDemoMode(event.detail.demoMode);
-      setInspecting(event.detail.inspecting);
-    };
+  const handleEntryMouseLeave = useCallback(() => {
+    setHovered(false);
+  }, [setHovered]);
 
-    document.addEventListener('state-changed', handleRunningUpdate as EventListener);
+  const handleOthersMouseEnter = useCallback(() => {
+    setHovered(false); // 确保互斥
+    setHoveringOthers(true);
+  }, [setHovered, setHoveringOthers]);
 
-    return () => {
-      document.removeEventListener('state-changed', handleRunningUpdate as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    chrome.runtime.sendMessage({ func: 'GetState' });
-  }, []);
-
-  const getInteractionModeIcon = () => {
-    switch (interactionMode) {
-      case 'hover':
-        return <FaMousePointer />;
-      case 'full':
-        return <FaExpand />;
-      default:
-        return <FaBan />;
-    }
-  };
-
-  const toggleInteractionMode = () => {
-    const modes: (typeof interactionMode)[] = ['hover', 'full'];
-    const currentIndex = modes.indexOf(interactionMode);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    const newMode = modes[nextIndex];
-    const msg: SetState = {
-      func: 'SetState',
-      inspecting: false,
-      demoMode: demoMode,
-      interactionMode: newMode,
-    };
-    chrome.runtime.sendMessage(msg);
-  };
-
-  const toggleDiagnoseMode = () => {
-    const msg: SetState = {
-      func: 'SetState',
-      interactionMode: interactionMode ?? 'hover',
-      demoMode: demoMode,
-      inspecting: !inspecting,
-    };
-    chrome.runtime.sendMessage(msg);
-  };
-
-  const toggleDemoMode = () => {
-    const msg: SetState = {
-      func: 'SetState',
-      interactionMode: interactionMode ?? 'hover',
-      demoMode: !demoMode,
-      inspecting: false,
-    };
-    chrome.runtime.sendMessage(msg);
-  };
+  const handleOthersMouseLeave = useCallback(() => {
+    setHoveringOthers(false);
+  }, [setHoveringOthers]);
 
   const dashboardStyle: React.CSSProperties = {
     position: 'fixed',
@@ -106,18 +55,19 @@ export const Dashboard: React.FC = () => {
     // backgroundColor: 'rgba(0, 0, 0, 0.1)',
   };
 
-  // 计算是否应该显示其他状态项
-  const shouldShowOthers = hoverd || hoveringOthers;
+  const widgetAnimationStyle = {
+    transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
+    opacity: shouldShowOthers ? 1 : 0,
+    transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+  };
 
   return (
     <div style={dashboardStyle}>
-      <div onMouseEnter={() => setHoverd(true)} onMouseLeave={() => setHoverd(false)}>
+      <div onMouseEnter={handleEntryMouseEnter} onMouseLeave={handleEntryMouseLeave}>
         <DashboardEntry
-          title="RWKV"
-          value={running ? '运行中' : '未运行'}
           style={{
-            transform: shouldShowOthers || hoverd ? 'translateX(0)' : 'translateX(67%)',
-            opacity: shouldShowOthers || hoverd ? 1 : 0.5,
+            transform: shouldShowOthers || hovered ? 'translateX(0)' : 'translateX(67%)',
+            opacity: shouldShowOthers || hovered ? 1 : 0.5,
             transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
           }}
         />
@@ -131,51 +81,12 @@ export const Dashboard: React.FC = () => {
           pointerEvents: shouldShowOthers ? 'auto' : 'none',
           paddingTop: '4px',
         }}
-        onMouseEnter={() => setHoveringOthers(true)}
-        onMouseLeave={() => setHoveringOthers(false)}>
-        <SideButton
-          icon={ignored ? <FaEyeSlash /> : <FaEye />}
-          title="页面被忽略了"
-          value={ignored ? '是' : '否'}
-          style={{
-            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
-            opacity: shouldShowOthers ? 1 : 0,
-            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
-          }}
-        />
-        <SideButton
-          icon={getInteractionModeIcon()}
-          title="交互模式"
-          value={'未实现'}
-          onClick={toggleInteractionMode}
-          style={{
-            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
-            opacity: shouldShowOthers ? 1 : 0,
-            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
-          }}
-        />
-        <SideButton
-          icon={<FaDesktop />}
-          title="演示模式"
-          value={'未实现'}
-          onClick={toggleDemoMode}
-          style={{
-            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
-            opacity: shouldShowOthers ? 1 : 0,
-            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
-          }}
-        />
-        <SideButton
-          icon={<FaBug />}
-          title="诊断模式"
-          value={inspecting ? '是' : '否'}
-          onClick={toggleDiagnoseMode}
-          style={{
-            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
-            opacity: shouldShowOthers ? 1 : 0,
-            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
-          }}
-        />
+        onMouseEnter={handleOthersMouseEnter}
+        onMouseLeave={handleOthersMouseLeave}>
+        <IgnoredStatusWidget style={widgetAnimationStyle} />
+        <InteractionModeWidget style={widgetAnimationStyle} />
+        <DemoModeWidget style={widgetAnimationStyle} />
+        <DiagnoseModeWidget style={widgetAnimationStyle} />
       </div>
     </div>
   );

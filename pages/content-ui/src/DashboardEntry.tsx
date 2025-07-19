@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import type React from 'react';
 
 export const DashboardEntry: React.FC<{
-  title: string;
-  value: string;
   onClick?: () => void;
   style?: React.CSSProperties;
-}> = ({ title, value, onClick, style: additionalStyle }) => {
+}> = ({ onClick, style: additionalStyle }) => {
   const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const icon = (
@@ -43,6 +41,7 @@ export const DashboardEntry: React.FC<{
     padding: '2px 4px',
     userSelect: 'none',
     transition: 'transform 0.3s ease-in-out, opacity 0.3s ease-in-out',
+    cursor: 'pointer',
     ...(isDarkMode
       ? {
           backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -66,8 +65,8 @@ export const DashboardEntry: React.FC<{
     <div onClick={onClick} style={style}>
       {icon}
       <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '4px' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>{title}</div>
-        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{value}</div>
+        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>RWKV</div>
+        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>离线翻译</div>
       </div>
     </div>
   );
