@@ -254,21 +254,3 @@ export const forcePositionSync = () => {
   updatePositionCache(positions);
   sendPositionSync(positions);
 };
-
-// 测试函数：创建一个测试位置
-export const createTestPosition = () => {
-  const testPosition: ElementPosition = {
-    id: 'test-element',
-    rect: {
-      left: 100,
-      top: 100,
-      width: 200,
-      height: 50,
-    },
-    text: 'Test Element',
-    type: 'target',
-  };
-
-  // 直接发送测试位置
-  sendPositionSync([testPosition]);
-};

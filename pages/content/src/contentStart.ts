@@ -1,6 +1,6 @@
 import { injectCss } from './injectcss';
 import { parseNode } from './parseNode';
-import { startPositionMonitoring, stopPositionMonitoring, createTestPosition } from './positionMonitor';
+import { startPositionMonitoring, stopPositionMonitoring } from './positionMonitor';
 import { state } from './state';
 import { ignoreHref, rwkvClass, rwkvEvent } from '@extension/shared';
 import type { AllMessage } from '@extension/shared';
@@ -62,11 +62,6 @@ export const contentStart = () => {
         document.body.querySelectorAll('*').forEach(parseNode);
         // 启动位置监听
         startPositionMonitoring();
-
-        // 测试：3秒后发送一个测试位置
-        setTimeout(() => {
-          createTestPosition();
-        }, 3000);
       }
     }
 
