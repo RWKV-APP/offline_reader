@@ -1,23 +1,23 @@
-import { BaseWidget } from './BaseWidget';
-import { useContentUIState } from './hooks/useContentUIState';
+import { Base } from './Base';
+import { useContentUIState } from '../hooks/useContentUIState';
 import { FaEye } from 'react-icons/fa';
 import type { FC } from 'react';
 
-export const BBoxWidget: FC<{
+export const BBox: FC<{
   style?: React.CSSProperties;
 }> = ({ style }) => {
   const { showBBox, toggleBBox, debug } = useContentUIState();
 
   // 调试信息
-  console.log('BBoxWidget: 状态', { showBBox, debug });
+  console.log('BBox: 状态', { showBBox, debug });
 
   const handleClick = () => {
-    console.log('BBoxWidget: 点击事件触发', { currentState: showBBox });
+    console.log('BBox: 点击事件触发', { currentState: showBBox });
     toggleBBox();
   };
 
   return (
-    <BaseWidget
+    <Base
       icon={<FaEye style={{ color: showBBox ? '#00ff00' : undefined }} />}
       title="HUD 诊断模式"
       value={showBBox ? '已开启' : '已关闭'}

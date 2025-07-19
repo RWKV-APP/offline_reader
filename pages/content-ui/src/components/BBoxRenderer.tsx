@@ -140,9 +140,9 @@ export const BBoxRenderer: React.FC<BBoxRendererProps> = ({ enabled }) => {
               backgroundColor: style.backgroundColor,
               zIndex: style.zIndex,
               borderRadius: '2px',
-              transition: 'all 0.1s ease-out',
+              transition: 'all 0.1s',
               // 确保边框可见
-              borderWidth: '2px',
+              borderWidth: '1px',
               borderStyle: 'solid',
             }}
             title={`${position.type}: ${position.text.slice(0, 50)}${position.text.length > 50 ? '...' : ''}`}

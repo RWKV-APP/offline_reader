@@ -1,9 +1,9 @@
-import { BaseWidget } from './BaseWidget';
-import { useContentUIState } from './hooks/useContentUIState';
+import { Base } from './Base';
+import { useContentUIState } from '../hooks/useContentUIState';
 import { FaMousePointer, FaExpand, FaBan } from 'react-icons/fa';
 import type { FC } from 'react';
 
-export const InteractionModeWidget: FC<{
+export const InteractionMode: FC<{
   style?: React.CSSProperties;
 }> = ({ style }) => {
   const { interactionMode, toggleInteractionMode } = useContentUIState();
@@ -20,7 +20,7 @@ export const InteractionModeWidget: FC<{
   };
 
   return (
-    <BaseWidget
+    <Base
       icon={getInteractionModeIcon()}
       title="交互模式"
       value="未实现"

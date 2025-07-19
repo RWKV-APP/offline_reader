@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type React from 'react';
 
-export const BaseWidget: React.FC<{
+export const Base: React.FC<{
   icon: React.ReactNode;
   title: string;
   value: string;

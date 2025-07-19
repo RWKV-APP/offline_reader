@@ -1,11 +1,6 @@
-import { BBoxWidget } from './BBoxWidget';
+import { BBox, DemoMode, DiagnoseMode, IgnoredStatus, InteractionMode, RunningStatus } from './components';
 import { DashboardEntry } from './DashboardEntry';
-import { DemoModeWidget } from './DemoModeWidget';
-import { DiagnoseModeWidget } from './DiagnoseModeWidget';
 import { useContentUIState } from './hooks/useContentUIState';
-import { IgnoredStatusWidget } from './IgnoredStatusWidget';
-import { InteractionModeWidget } from './InteractionModeWidget';
-import { RunningStatusWidget } from './RunningStatusWidget';
 import { useCallback } from 'react';
 import type { FC } from 'react';
 
@@ -87,12 +82,12 @@ export const Dashboard: FC = () => {
         }}
         onMouseEnter={handleOthersMouseEnter}
         onMouseLeave={handleOthersMouseLeave}>
-        <RunningStatusWidget style={widgetAnimationStyle} />
-        <IgnoredStatusWidget style={widgetAnimationStyle} />
-        <InteractionModeWidget style={widgetAnimationStyle} />
-        <DemoModeWidget style={widgetAnimationStyle} />
-        <DiagnoseModeWidget style={widgetAnimationStyle} />
-        <BBoxWidget style={widgetAnimationStyle} />
+        <RunningStatus style={widgetAnimationStyle} />
+        <IgnoredStatus style={widgetAnimationStyle} />
+        <InteractionMode style={widgetAnimationStyle} />
+        <DemoMode style={widgetAnimationStyle} />
+        <DiagnoseMode style={widgetAnimationStyle} />
+        <BBox style={widgetAnimationStyle} />
       </div>
     </div>
   );
