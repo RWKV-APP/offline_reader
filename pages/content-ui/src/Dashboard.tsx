@@ -105,8 +105,8 @@ export const Dashboard: FC = () => {
         onMouseLeave={handleOthersMouseLeave}>
         <RunningStatus style={widgetAnimationStyle} />
         <IgnoredStatus style={widgetAnimationStyle} />
-        <InteractionMode style={widgetAnimationStyle} />
-        <DemoMode style={widgetAnimationStyle} />
+        {/* <InteractionMode style={widgetAnimationStyle} />
+        <DemoMode style={widgetAnimationStyle} /> */}
         <DiagnoseMode style={widgetAnimationStyle} />
         <BBox style={widgetAnimationStyle} />
         <FeedbackButton style={widgetAnimationStyle} />

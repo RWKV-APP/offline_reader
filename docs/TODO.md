@@ -4,6 +4,7 @@
 
 ### 高优先级
 
+- [ ] 优选翻译排序
 - [ ] Bundle chrome extension files
 - [ ] 使用教程
 - [ ] 演示模式
@@ -13,8 +14,9 @@
 - [x] 状态同步
 - [x] Test on Windows
 - [x] Backend UI
-- [ ] 汇报问题按钮, 发送至企业邮箱
+- [x] 汇报问题按钮, 发送至企业邮箱
 - [ ] Hover 功能
+- [ ] 忽略状态
 
 ### 中优先级
 

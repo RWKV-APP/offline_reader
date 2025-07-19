@@ -2,16 +2,17 @@
 alwaysApply: true
 ---
 
-## 禁止做以下的行为, 如非被明确要求
+## 禁止做以下的行为
 
-- 禁止自动跑任何 pnpm 命令
-- 禁止自动创建 README.md 文件
-- 禁止自动生成 console.log 语句
-- 禁止自动跑任何的 linter 命令
-- 禁止自动构建任何的 e2e 测试
-- 禁止自动使用 tailwindcss
+- 禁止自动跑任何 pnpm 命令, 如非被明确要求
+- 禁止自动创建/编辑 README.md 文件, 如非被明确要求
+- 禁止自动生成 console.log 语句, 如非被明确要求
+- 禁止自动跑任何的 linter 命令, 如非被明确要求
+- 禁止自动构建任何的 e2e 测试, 如非被明确要求
+- 禁止自动使用 tailwindcss, 如非被明确要求
 
 ## 建议做以下的行为
 
 - 尽量使用 for 循环, 尽量不实用 forEach
 - 在 Typescript 中, 禁止使用 any, 尽量推导出来类型
+- 尽量使用 Hook 管理装状态
