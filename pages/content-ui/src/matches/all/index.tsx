@@ -19,6 +19,18 @@ const onMessage = (
       document.dispatchEvent(new CustomEvent('state-changed', { detail: message }));
       break;
     }
+    case 'QueryRequest': {
+      break;
+    }
+    case 'QueryResponse': {
+      break;
+    }
+    case 'SetState': {
+      break;
+    }
+    case 'GetState': {
+      break;
+    }
   }
 };
 
@@ -29,7 +41,7 @@ const startListen = () => {
   setTimeout(() => {
     console.log('sendMessage: content-ui', { func: 'GetState' });
     chrome.runtime.sendMessage({ func: 'GetState' });
-  }, 1000);
+  }, 500);
 };
 
 const stopListen = () => {

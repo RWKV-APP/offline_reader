@@ -3,7 +3,7 @@ import { injectCss } from './injectcss';
 import { state } from './state';
 import { ignoreHref } from '@extension/shared';
 
-export const sampleFunction = () => {
+export const contentStart = () => {
   injectCss();
 
   const handleStateChanged = (event: CustomEvent) => {

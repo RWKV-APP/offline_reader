@@ -1,5 +1,5 @@
-import { sampleFunction } from '@src/sample-function';
+import { contentStart } from '@src/contentStart';
 
 console.log('[CEB] Example content script loaded');
 
-void sampleFunction();
+void contentStart();

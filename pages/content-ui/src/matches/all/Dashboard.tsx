@@ -1,74 +1,9 @@
+import { SideButton } from './SideButton';
 import { ignoreHref } from '@extension/shared';
 import { useState, useEffect } from 'react';
 import { FaPlay, FaStop, FaEye, FaEyeSlash, FaMousePointer, FaExpand, FaBan, FaDesktop, FaBug } from 'react-icons/fa';
 import type { SetState } from '@extension/shared';
 import type React from 'react';
-
-// --- Status Item Component ---
-const StatusItem: React.FC<{ icon: React.ReactNode; title: string; value: string; onClick?: () => void }> = ({
-  icon,
-  title,
-  value,
-  onClick,
-}) => {
-  const [isDarkMode, setIsDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-    };
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
-  const style: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    backdropFilter: 'blur(8px)',
-    borderRadius: '8px',
-    padding: '2px 4px',
-    ...(isDarkMode
-      ? {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          border: '1px solid rgba(255, 255, 255, 0.5)',
-          color: '#fff',
-        }
-      : {
-          backgroundColor: 'rgba(255, 255, 255, 0.5)',
-          border: '1px solid rgba(0, 0, 0, 0.5)',
-          color: '#111',
-        }),
-  };
-
-  if (onClick) {
-    style.pointerEvents = 'auto';
-    style.cursor = 'pointer';
-  }
-  return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div onClick={onClick} style={style}>
-      <div
-        style={{
-          width: '24px',
-          height: '24px',
-          marginRight: '2px',
-          flexShrink: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        {icon}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>{title}</div>
-        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{value}</div>
-      </div>
-    </div>
-  );
-};
 
 export const Dashboard: React.FC = () => {
   // 是否运行中, websocket 是否处于链接状态?
@@ -79,6 +14,10 @@ export const Dashboard: React.FC = () => {
   const [interactionMode, setInteractionMode] = useState<'hover' | 'full'>('hover');
   // 演示模式
   const [demoMode, setDemoMode] = useState(false);
+  // 是否显示其他状态项
+  const [hoverd, setHoverd] = useState(false);
+  // 是否正在hover其他状态项
+  const [hoveringOthers, setHoveringOthers] = useState(false);
 
   const [inspecting, setInspecting] = useState(false);
 
@@ -150,42 +89,94 @@ export const Dashboard: React.FC = () => {
   const dashboardStyle: React.CSSProperties = {
     position: 'fixed',
     bottom: 0,
-    left: 0,
+    right: 0,
     top: 0,
-    width: 180,
     zIndex: 2147483647,
     pointerEvents: 'none',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    padding: '20px 20px 20px 4px',
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
     gap: '4px',
+    userSelect: 'none',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
   };
+
+  // 计算是否应该显示其他状态项
+  const shouldShowOthers = hoverd || hoveringOthers;
 
   return (
     <div style={dashboardStyle}>
-      <StatusItem
-        icon={running ? <FaPlay /> : <FaStop />}
-        title="RWKV 运行状态"
-        value={running ? '运行中' : '未运行'}
-      />
-      <StatusItem icon={ignored ? <FaEyeSlash /> : <FaEye />} title="页面被忽略了" value={ignored ? '是' : '否'} />
-      <StatusItem
-        icon={getInteractionModeIcon()}
-        title="交互模式"
-        // value={interactionMode ?? 'None'}
-        value={'未实现'}
-        onClick={toggleInteractionMode}
-      />
-      <StatusItem
-        icon={<FaDesktop />}
-        title="演示模式"
-        // value={demoMode ? '是' : '否'}
-        value={'未实现'}
-        onClick={toggleDemoMode}
-      />
-      <StatusItem icon={<FaBug />} title="诊断模式" value={inspecting ? '是' : '否'} onClick={toggleDiagnoseMode} />
+      <div onMouseEnter={() => setHoverd(true)} onMouseLeave={() => setHoverd(false)}>
+        <SideButton
+          icon={running ? <FaPlay /> : <FaStop />}
+          title="??"
+          value={running ? '运行中' : '未运行'}
+          style={{
+            transform: shouldShowOthers || hoverd ? 'translateX(0)' : 'translateX(67%)',
+            opacity: shouldShowOthers || hoverd ? 1 : 0.5,
+            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+          }}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          pointerEvents: shouldShowOthers ? 'auto' : 'none',
+        }}
+        onMouseEnter={() => setHoveringOthers(true)}
+        onMouseLeave={() => setHoveringOthers(false)}>
+        <SideButton
+          icon={ignored ? <FaEyeSlash /> : <FaEye />}
+          title="页面被忽略了"
+          value={ignored ? '是' : '否'}
+          style={{
+            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
+            opacity: shouldShowOthers ? 1 : 0,
+            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+          }}
+        />
+        <SideButton
+          icon={getInteractionModeIcon()}
+          title="交互模式"
+          value={'未实现'}
+          onClick={toggleInteractionMode}
+          style={{
+            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
+            opacity: shouldShowOthers ? 1 : 0,
+            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+          }}
+        />
+        <SideButton
+          icon={<FaDesktop />}
+          title="演示模式"
+          value={'未实现'}
+          onClick={toggleDemoMode}
+          style={{
+            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
+            opacity: shouldShowOthers ? 1 : 0,
+            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+          }}
+        />
+        <SideButton
+          icon={<FaBug />}
+          title="诊断模式"
+          value={inspecting ? '是' : '否'}
+          onClick={toggleDiagnoseMode}
+          style={{
+            transform: shouldShowOthers ? 'translateX(0)' : 'translateX(100%)',
+            opacity: shouldShowOthers ? 1 : 0,
+            transition: 'transform 0.1s ease-out, opacity 0.1s ease-out',
+          }}
+        />
+      </div>
     </div>
   );
 };
