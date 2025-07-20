@@ -79,7 +79,6 @@ const stopListenWindows = () => {
   chrome.windows.onCreated.removeListener(_onCreated);
   chrome.windows.onRemoved.removeListener(_onRemoved);
   chrome.windows.onFocusChanged.removeListener(_onFocusChanged);
-  chrome.windows.onBoundsChanged.removeListener(_onBoundsChanged);
 };
 
 export const startListenWindows = () => {
@@ -88,5 +87,4 @@ export const startListenWindows = () => {
   chrome.windows.onCreated.addListener(_onCreated);
   chrome.windows.onRemoved.addListener(_onRemoved);
   chrome.windows.onFocusChanged.addListener(_onFocusChanged);
-  chrome.windows.onBoundsChanged.addListener(_onBoundsChanged);
 };

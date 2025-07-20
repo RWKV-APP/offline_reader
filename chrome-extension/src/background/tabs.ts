@@ -28,7 +28,6 @@ const getAllTabs = async (): Promise<chrome.tabs.Tab[]> => {
 const all = () => {
   getActiveTabForFocusedWindow().then(tab => {
     if (tab == null) {
-      console.log('getActiveTabForFocusedWindow', tab);
       return;
     }
     const id = tab.id;

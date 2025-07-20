@@ -70,6 +70,7 @@ const listenMessageForUI = (
       case 'QueryRequest': {
         const { source, logic, url, nodeName, priority, tick } = message.body;
         const tabId = sender.tab?.id;
+        const windowId = sender.tab?.windowId;
         const v = waitingQuery[source];
         if (v === undefined) {
           waitingQuery[source] = { resolves: [sendResponse] };
@@ -80,7 +81,7 @@ const listenMessageForUI = (
             v.resolves.push(sendResponse);
           }
         }
-        const data = { source, logic, url, tabId, nodeName, priority, tick };
+        const data = { source, logic, url, tabId, nodeName, priority, tick, windowId };
         ws?.send(JSON.stringify(data));
         return true;
       }
