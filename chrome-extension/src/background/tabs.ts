@@ -3,7 +3,12 @@ import { ws } from '.';
 
 const getActiveTabForFocusedWindow = async (): Promise<chrome.tabs.Tab | null> => {
   try {
-    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true, lastFocusedWindow: true });
+    const [activeTab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+      lastFocusedWindow: true,
+      pinned: false,
+    });
     return activeTab;
   } catch (error) {
     console.error('Error getting active tab:', error);
@@ -22,12 +27,16 @@ const getAllTabs = async (): Promise<chrome.tabs.Tab[]> => {
 
 const all = () => {
   getActiveTabForFocusedWindow().then(tab => {
-    const id = tab?.id;
-    const url = tab?.url;
-    const title = tab?.title;
-    const favIconUrl = tab?.favIconUrl;
-    const windowId = tab?.windowId;
-    const lastAccessed = tab?.lastAccessed;
+    if (tab == null) {
+      console.log('getActiveTabForFocusedWindow', tab);
+      return;
+    }
+    const id = tab.id;
+    const url = tab.url;
+    const title = tab.title;
+    const favIconUrl = tab.favIconUrl;
+    const windowId = tab.windowId;
+    const lastAccessed = Date.now() ?? tab.lastAccessed;
     const data = {
       logic: 'tab_actived',
       tab: { id, url, title, favIconUrl, windowId, lastAccessed },
@@ -49,6 +58,22 @@ const all = () => {
     };
     ws?.send(JSON.stringify(data));
   });
+};
+
+export const tabsAll = async (tabs: chrome.tabs.Tab[]) => {
+  const data = {
+    logic: 'tabs_all',
+    tabs: tabs.map(tab => {
+      const id = tab.id;
+      const url = tab.url;
+      const title = tab.title;
+      const favIconUrl = tab.favIconUrl;
+      const windowId = tab.windowId;
+      const lastAccessed = tab.lastAccessed;
+      return { id, url, title, favIconUrl, windowId, lastAccessed };
+    }),
+  };
+  ws?.send(JSON.stringify(data));
 };
 
 const _onHighlighted = (activeInfo: chrome.tabs.TabHighlightInfo) => {

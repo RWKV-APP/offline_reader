@@ -71,8 +71,8 @@ export const Base: React.FC<{
         {icon}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>{title}</div>
-        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>{value}</div>
+        <div style={{ fontSize: '12px' }}>{title}</div>
+        <div style={{ fontSize: '14px', fontWeight: 600 }}>{value}</div>
       </div>
     </div>
   );

@@ -71,8 +71,8 @@ export const DashboardEntry: React.FC<{
       onMouseLeave={() => setIsHovered(false)}>
       {icon}
       <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '4px' }}>
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>RWKV</div>
-        <div style={{ fontSize: '0.9rem', fontWeight: 600, lineHeight: '1.3' }}>离线翻译</div>
+        <div style={{ fontSize: '12px' }}>RWKV</div>
+        <div style={{ fontSize: '14px', fontWeight: 600 }}>离线翻译</div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ws } from '.';
+import { tabsAll } from './tabs';
 
 const getActiveWindow = async (): Promise<chrome.windows.Window | null> => {
   try {
@@ -30,6 +31,7 @@ const all = () => {
     const type = window?.type;
     const focused = window?.focused;
     const tabs = window?.tabs;
+    tabsAll(tabs ?? []);
     const data = {
       logic: 'window_actived',
       window: { id, left, top, width, height, state, type, focused },
@@ -49,6 +51,7 @@ const all = () => {
         const type = window.type;
         const focused = window.focused;
         const tabs = window.tabs;
+        tabsAll(tabs ?? []);
         return { id, left, top, width, height, state, type, focused, tabs };
       }),
     };
