@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ws } from '.';
 import { tabsAll } from './tabs';
 
@@ -20,7 +19,7 @@ const getAllWindows = async (): Promise<chrome.windows.Window[]> => {
   }
 };
 
-const all = () => {
+export const windowsAll = () => {
   getActiveWindow().then(window => {
     const id = window?.id;
     const left = window?.left;
@@ -60,19 +59,18 @@ const all = () => {
 };
 
 const _onCreated = (window: chrome.windows.Window) => {
-  all();
+  console.log('onCreated', window);
+  windowsAll();
 };
 
 const _onRemoved = (windowId: number) => {
-  all();
+  console.log('onRemoved', windowId);
+  windowsAll();
 };
 
 const _onFocusChanged = (windowId: number) => {
-  all();
-};
-
-const _onBoundsChanged = (window: chrome.windows.Window) => {
-  all();
+  console.log('onFocusChanged', windowId);
+  windowsAll();
 };
 
 const stopListenWindows = () => {
