@@ -22,16 +22,26 @@ const getAllTabs = async (): Promise<chrome.tabs.Tab[]> => {
 
 const all = () => {
   getActiveTabForFocusedWindow().then(tab => {
+    const id = tab?.id;
+    const url = tab?.url;
+    const title = tab?.title;
+    const favIconUrl = tab?.favIconUrl;
     const data = {
       logic: 'tab_actived',
-      tab: { id: tab?.id, url: tab?.url, title: tab?.title, favIconUrl: tab?.favIconUrl },
+      tab: { id, url, title, favIconUrl },
     };
     ws?.send(JSON.stringify(data));
   });
   getAllTabs().then(tabs => {
     const data = {
       logic: 'tabs_all',
-      tabs: tabs.map(tab => ({ id: tab.id, url: tab.url, title: tab.title, favIconUrl: tab.favIconUrl })),
+      tabs: tabs.map(tab => {
+        const id = tab.id;
+        const url = tab.url;
+        const title = tab.title;
+        const favIconUrl = tab.favIconUrl;
+        return { id, url, title, favIconUrl };
+      }),
     };
     ws?.send(JSON.stringify(data));
   });
