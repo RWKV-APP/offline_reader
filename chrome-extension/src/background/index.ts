@@ -137,14 +137,47 @@ const listenMessageForUI = (
           }
         }
 
-        // 发送响应
-        sendResponse({
-          func: 'PositionSyncResponse',
-          body: { success: true },
-        });
-        return true;
+        return false;
       }
       case 'PositionSyncResponse': {
+        break;
+      }
+      case 'PageSizeSync': {
+        const {
+          innerHeight,
+          outerHeight,
+          innerWidth,
+          outerWidth,
+          scrollTop,
+          scrollLeft,
+          scrollHeight,
+          scrollWidth,
+          tabId,
+        } = message.body;
+        const tab = sender.tab;
+        const actualTabId = tab?.id || tabId;
+        const windowId = tab?.windowId;
+
+        if (actualTabId && actualTabId !== -1) {
+          const logic = 'tab_size_change';
+          const tabInfo = {
+            id: actualTabId,
+            innerHeight,
+            outerHeight,
+            innerWidth,
+            outerWidth,
+            scrollTop,
+            scrollLeft,
+            scrollHeight,
+            scrollWidth,
+            windowId,
+          };
+          const data = { logic, tab: tabInfo };
+          ws?.send(JSON.stringify(data));
+        }
+        return false;
+      }
+      case 'PageSizeSyncResponse': {
         break;
       }
     }

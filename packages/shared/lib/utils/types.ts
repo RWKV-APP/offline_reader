@@ -64,7 +64,9 @@ export type AllMessage =
   | GetState
   | GetStateResponse
   | PositionSync
-  | PositionSyncResponse;
+  | PositionSyncResponse
+  | PageSizeSync
+  | PageSizeSyncResponse;
 
 export interface State {
   interactionMode: 'hover' | 'full';
@@ -107,6 +109,39 @@ export interface PositionSync {
  */
 export interface PositionSyncResponse {
   func: 'PositionSyncResponse';
+  body: {
+    success: boolean;
+  };
+}
+
+/**
+ * 页面尺寸信息
+ */
+export interface PageSizeInfo {
+  innerHeight: number;
+  outerHeight: number;
+  innerWidth: number;
+  outerWidth: number;
+  scrollTop: number;
+  scrollLeft: number;
+  scrollHeight: number;
+  scrollWidth: number;
+  tabId: number;
+}
+
+/**
+ * 页面尺寸同步消息
+ */
+export interface PageSizeSync {
+  func: 'PageSizeSync';
+  body: PageSizeInfo;
+}
+
+/**
+ * 页面尺寸同步响应
+ */
+export interface PageSizeSyncResponse {
+  func: 'PageSizeSyncResponse';
   body: {
     success: boolean;
   };

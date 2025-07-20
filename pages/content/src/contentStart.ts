@@ -8,6 +8,56 @@ import type { AllMessage } from '@extension/shared';
 export const contentStart = () => {
   injectCss();
 
+  // 页面尺寸监听相关变量
+  let sizeCheckInterval: NodeJS.Timeout | null = null;
+
+  // 发送页面尺寸信息到background
+  const sendPageSizeInfo = () => {
+    try {
+      chrome.runtime.sendMessage({
+        func: 'PageSizeSync',
+        body: {
+          innerHeight: window.innerHeight,
+          outerHeight: window.outerHeight,
+          innerWidth: window.innerWidth,
+          outerWidth: window.outerWidth,
+          scrollTop: document.documentElement.scrollTop,
+          scrollLeft: document.documentElement.scrollLeft,
+          scrollHeight: document.documentElement.scrollHeight,
+          scrollWidth: document.documentElement.scrollWidth,
+          tabId: -1, // 将在background中获取实际的tabId
+        },
+      });
+    } catch (error) {
+      console.error('content: 发送页面尺寸信息失败', error);
+    }
+  };
+
+  // 启动页面尺寸监听
+  const startPageSizeMonitoring = () => {
+    stopPageSizeMonitoring();
+    // 监听resize事件
+    window.addEventListener('resize', sendPageSizeInfo);
+
+    // 定期检查尺寸变化（每500ms检查一次）
+    sizeCheckInterval = setInterval(sendPageSizeInfo, 1000);
+
+    // 立即发送一次初始尺寸
+    sendPageSizeInfo();
+  };
+
+  // 停止页面尺寸监听
+  const stopPageSizeMonitoring = () => {
+    window.removeEventListener('resize', sendPageSizeInfo);
+    if (sizeCheckInterval) {
+      clearInterval(sizeCheckInterval);
+      sizeCheckInterval = null;
+    }
+  };
+
+  // 启动页面尺寸监听
+  startPageSizeMonitoring();
+
   const handleStateChanged = (event: CustomEvent) => {
     const { interactionMode, demoMode, ignored, running, inspecting, showBBox } = event.detail;
     state.interactionMode = interactionMode;
@@ -98,7 +148,9 @@ export const contentStart = () => {
       case 'SetState':
       case 'GetState':
       case 'PositionSync':
-      case 'PositionSyncResponse': {
+      case 'PositionSyncResponse':
+      case 'PageSizeSync':
+      case 'PageSizeSyncResponse': {
         // 这些消息在 content script 中不需要处理
         break;
       }
