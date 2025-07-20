@@ -44,7 +44,7 @@ const getElementPosition = (element: HTMLElement): ElementPosition | null => {
     return {
       id: generateElementId(element),
       rect: {
-        left: rect.left + window.scrollX,
+        left: rect.left,
         top: rect.top,
         width: rect.width,
         height: rect.height,

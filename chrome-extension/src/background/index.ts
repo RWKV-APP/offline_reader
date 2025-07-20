@@ -1,5 +1,6 @@
 import 'webextension-polyfill';
 import { startListenTabs } from './tabs';
+import { startListenWindows } from './windows';
 import { ignoreHref } from '@extension/shared';
 import { contentUIStateStorage } from '@extension/storage';
 import type { AllMessage, QueryResponse, State } from '@extension/shared';
@@ -305,6 +306,7 @@ setInterval(() => {
   connectWebSocket();
 }, 2000);
 
+startListenWindows();
 startListenTabs();
 
 export { ws };
