@@ -20,42 +20,46 @@ const getAllWindows = async (): Promise<chrome.windows.Window[]> => {
 };
 
 export const windowsAll = () => {
-  getActiveWindow().then(window => {
-    const id = window?.id;
-    const left = window?.left;
-    const top = window?.top;
-    const width = window?.width;
-    const height = window?.height;
-    const state = window?.state;
-    const type = window?.type;
-    const focused = window?.focused;
-    const tabs = window?.tabs;
-    tabsAll(tabs ?? []);
-    const data = {
-      logic: 'window_actived',
-      window: { id, left, top, width, height, state, type, focused },
-    };
-    ws?.send(JSON.stringify(data));
-  });
-  getAllWindows().then(windows => {
-    const data = {
-      logic: 'windows_all',
-      windows: windows.map(window => {
-        const id = window.id;
-        const left = window.left;
-        const top = window.top;
-        const width = window.width;
-        const height = window.height;
-        const state = window.state;
-        const type = window.type;
-        const focused = window.focused;
-        const tabs = window.tabs;
-        tabsAll(tabs ?? []);
-        return { id, left, top, width, height, state, type, focused, tabs };
-      }),
-    };
-    ws?.send(JSON.stringify(data));
-  });
+  try {
+    getActiveWindow().then(window => {
+      const id = window?.id;
+      const left = window?.left;
+      const top = window?.top;
+      const width = window?.width;
+      const height = window?.height;
+      const state = window?.state;
+      const type = window?.type;
+      const focused = window?.focused;
+      const tabs = window?.tabs;
+      tabsAll(tabs ?? []);
+      const data = {
+        logic: 'window_actived',
+        window: { id, left, top, width, height, state, type, focused },
+      };
+      ws?.send(JSON.stringify(data));
+    });
+    getAllWindows().then(windows => {
+      const data = {
+        logic: 'windows_all',
+        windows: windows.map(window => {
+          const id = window.id;
+          const left = window.left;
+          const top = window.top;
+          const width = window.width;
+          const height = window.height;
+          const state = window.state;
+          const type = window.type;
+          const focused = window.focused;
+          const tabs = window.tabs;
+          tabsAll(tabs ?? []);
+          return { id, left, top, width, height, state, type, focused, tabs };
+        }),
+      };
+      ws?.send(JSON.stringify(data));
+    });
+  } catch (error) {
+    console.error('Error getting all windows:', error);
+  }
 };
 
 const _onCreated = (window: chrome.windows.Window) => {
