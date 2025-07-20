@@ -27,9 +27,10 @@ const all = () => {
     const title = tab?.title;
     const favIconUrl = tab?.favIconUrl;
     const windowId = tab?.windowId;
+    const lastAccessed = tab?.lastAccessed;
     const data = {
       logic: 'tab_actived',
-      tab: { id, url, title, favIconUrl, windowId },
+      tab: { id, url, title, favIconUrl, windowId, lastAccessed },
     };
     ws?.send(JSON.stringify(data));
   });
@@ -42,7 +43,8 @@ const all = () => {
         const title = tab.title;
         const favIconUrl = tab.favIconUrl;
         const windowId = tab.windowId;
-        return { id, url, title, favIconUrl, windowId };
+        const lastAccessed = tab.lastAccessed;
+        return { id, url, title, favIconUrl, windowId, lastAccessed };
       }),
     };
     ws?.send(JSON.stringify(data));

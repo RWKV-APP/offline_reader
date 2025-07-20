@@ -29,6 +29,7 @@ const all = () => {
     const state = window?.state;
     const type = window?.type;
     const focused = window?.focused;
+    const tabs = window?.tabs;
     const data = {
       logic: 'window_actived',
       window: { id, left, top, width, height, state, type, focused },
@@ -47,7 +48,8 @@ const all = () => {
         const state = window.state;
         const type = window.type;
         const focused = window.focused;
-        return { id, left, top, width, height, state, type, focused };
+        const tabs = window.tabs;
+        return { id, left, top, width, height, state, type, focused, tabs };
       }),
     };
     ws?.send(JSON.stringify(data));
