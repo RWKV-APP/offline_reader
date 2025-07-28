@@ -73,7 +73,6 @@ const _onRemoved = (windowId: number) => {
 };
 
 const _onFocusChanged = (windowId: number) => {
-  console.log('onFocusChanged', windowId);
   windowsAll();
 };
 

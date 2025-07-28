@@ -65,6 +65,7 @@ export const all = () => {
 };
 
 export const tabsAll = async (tabs: chrome.tabs.Tab[]) => {
+  if (tabs.length == 0) tabs = await getAllTabs();
   const data = {
     logic: 'tabs_all',
     tabs: tabs.map(tab => {
