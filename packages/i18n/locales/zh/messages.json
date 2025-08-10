@@ -1,0 +1,48 @@
+{
+  "extensionDescription": {
+    "description": "Extension description",
+    "message": "通过 RWKV Chat 客户端, 在您的电脑上直接执行网页翻译操作"
+  },
+  "extensionName": {
+    "description": "Extension name",
+    "message": "RWKV 离线翻译"
+  },
+  "toggleTheme": {
+    "message": "切换主题"
+  },
+  "syncState": {
+    "message": "同步状态"
+  },
+  "injectButton": {
+    "message": "点击注入内容脚本"
+  },
+  "greeting": {
+    "description": "Greeting message",
+    "message": "你好, 我的名字是 $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "John Doe"
+      }
+    }
+  },
+  "hello": {
+    "description": "Placeholder example",
+    "message": "你好 $1"
+  },
+  "displayErrorInfo": {
+    "message": "错误发生"
+  },
+  "displayErrorDescription": {
+    "message": "抱歉, 加载页面时出错."
+  },
+  "displayErrorDetailsInfo": {
+    "message": "错误详情:"
+  },
+  "displayErrorUnknownErrorInfo": {
+    "message": "未知错误"
+  },
+  "displayErrorReset": {
+    "message": "重新运行"
+  }
+}

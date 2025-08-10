@@ -20,7 +20,7 @@ const packageJson = JSON.parse(readFileSync('./package.json', 'utf8'));
  */
 const manifest = {
   manifest_version: 3,
-  default_locale: 'en',
+  default_locale: 'zh',
   name: '__MSG_extensionName__',
   browser_specific_settings: {
     gecko: {
