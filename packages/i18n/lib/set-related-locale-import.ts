@@ -27,7 +27,7 @@ export default () => {
     } else if (implementedLocales.includes(localeWithoutRegion)) {
       i18nFileSplitContent[1] = `import localeJSON from '../locales/${localeWithoutRegion}/messages.json' with { type: 'json' };`;
     } else {
-      i18nFileSplitContent[1] = `import localeJSON from '../locales/zh/messages.json' with { type: 'json' };`;
+      i18nFileSplitContent[1] = `import localeJSON from '../locales/zh_CN/messages.json' with { type: 'json' };`;
     }
   }
 

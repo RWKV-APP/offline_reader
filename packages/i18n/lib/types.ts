@@ -1,4 +1,4 @@
-import enMessage from '../locales/zh/messages.json' with { type: 'json' };
+import enMessage from '../locales/zh_CN/messages.json' with { type: 'json' };
 import type { SUPPORTED_LANGUAGES } from './consts.js';
 
 export type SupportedLanguagesKeysType = keyof typeof SUPPORTED_LANGUAGES;
