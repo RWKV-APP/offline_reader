@@ -261,6 +261,9 @@ importers:
 
   packages/shared:
     dependencies:
+      '@extension/storage':
+        specifier: workspace:*
+        version: link:../storage
       franc:
         specifier: ^6.2.0
         version: 6.2.0
