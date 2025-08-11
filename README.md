@@ -1,4 +1,7 @@
-# RWKV 离线翻译
+# RWKV Offline Reader
 
-前端: Chrome 插件
-后端: RWKV Chat App
+RWKV 离线翻译
+
+本插件直接通过 websocket 将翻译请求发送到运行在你自己设备的 RWKV Chat 上
+
+本插件的功能模仿了[沉浸式翻译](https://immersivetranslate.com/)
