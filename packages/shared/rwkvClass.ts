@@ -19,6 +19,11 @@ export const rwkvClass = {
   inspect: 'rwkvInspecting',
 
   /**
+   * 暂停翻译时挂在页面根节点上，用于隐藏已插入的翻译结果
+   */
+  paused: 'rwkvOfflineTranslationPaused',
+
+  /**
    * 翻译目标元素的 CSS 类名
    * 标识需要被翻译的原始文本元素
    * 在 parseNode.ts 中为符合条件的文本节点添加此类名

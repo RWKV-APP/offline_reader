@@ -1,4 +1,4 @@
-import { BBox, DiagnoseMode, IgnoredStatus, RunningStatus, FeedbackButton } from './components';
+import { BBox, DiagnoseMode, IgnoredStatus, RunningStatus, TranslationToggle, FeedbackButton } from './components';
 import { DashboardEntry } from './DashboardEntry';
 import { useContentUIState } from './hooks/useContentUIState';
 import { useFullscreenDetection } from './hooks/useFullscreenDetection';
@@ -13,6 +13,7 @@ export const Dashboard: FC = () => {
     // 操作方法
     setHovered,
     setHoveringOthers,
+    toggleTranslationEnabled,
   } = useContentUIState();
 
   // 全屏检测
@@ -75,6 +76,7 @@ export const Dashboard: FC = () => {
     <div style={dashboardStyle}>
       <div onMouseEnter={handleEntryMouseEnter} onMouseLeave={handleEntryMouseLeave}>
         <DashboardEntry
+          onClick={toggleTranslationEnabled}
           style={{
             transform: shouldShowOthers || hovered ? 'translateX(0)' : 'translateX(67%)',
             opacity: shouldShowOthers || hovered ? 1 : 0.5,
@@ -93,6 +95,7 @@ export const Dashboard: FC = () => {
         }}
         onMouseEnter={handleOthersMouseEnter}
         onMouseLeave={handleOthersMouseLeave}>
+        <TranslationToggle style={widgetAnimationStyle} />
         <RunningStatus style={widgetAnimationStyle} />
         <IgnoredStatus style={widgetAnimationStyle} />
         {/* <InteractionMode style={widgetAnimationStyle} />

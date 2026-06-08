@@ -62,6 +62,8 @@ export interface TranslationModeStateType {
 
 export type TranslationModeStorageType = BaseStorageType<TranslationModeStateType> & {
   toggle: () => Promise<void>;
+  toggleEnabled: () => Promise<void>;
+  setEnabled: (enabled: boolean) => Promise<void>;
   setMode: (mode: TranslationMode) => Promise<void>;
   setTargetLanguage: (language: string) => Promise<void>;
 };
@@ -94,6 +96,7 @@ export type EngineStatusStorageType = BaseStorageType<EngineStatus> & {
 
 export interface ContentUIStateType {
   // Global state from background
+  translationEnabled: boolean;
   running: boolean;
   ignored: boolean;
   interactionMode: 'hover' | 'full';
@@ -109,6 +112,7 @@ export type ContentUIStorageType = BaseStorageType<ContentUIStateType> & {
   toggleDiagnoseMode: () => Promise<void>;
   toggleBBox: () => Promise<void>;
   updateGlobalState: (state: {
+    translationEnabled: boolean;
     running: boolean;
     ignored: boolean;
     interactionMode: 'hover' | 'full';

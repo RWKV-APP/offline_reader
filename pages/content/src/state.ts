@@ -5,6 +5,7 @@ export const state: State = {
   interactionMode: 'full',
   demoMode: false,
   ignored: false,
+  translationEnabled: true,
   running: false,
   ignoreHref,
   inspecting: false,

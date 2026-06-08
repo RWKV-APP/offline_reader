@@ -3,6 +3,7 @@ export { Base } from './Base';
 export { BBox } from './BBox';
 export { DiagnoseMode } from './DiagnoseMode';
 export { RunningStatus } from './RunningStatus';
+export { TranslationToggle } from './TranslationToggle';
 export { DemoMode } from './DemoMode';
 export { InteractionMode } from './InteractionMode';
 export { IgnoredStatus } from './IgnoredStatus';

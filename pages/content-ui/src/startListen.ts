@@ -19,7 +19,31 @@ const onMessage = (
     case 'QueryResponse': {
       break;
     }
+    case 'QueryStreamRequest': {
+      break;
+    }
+    case 'QueryStreamSnapshot': {
+      break;
+    }
+    case 'QueryStreamDelta': {
+      break;
+    }
+    case 'QueryStreamDone': {
+      break;
+    }
+    case 'QueryStreamError': {
+      break;
+    }
+    case 'QueryStreamCancel': {
+      break;
+    }
+    case 'UpdateTranslationPriorities': {
+      break;
+    }
     case 'SetState': {
+      break;
+    }
+    case 'SetTranslationEnabled': {
       break;
     }
     case 'GetState': {
@@ -35,6 +59,18 @@ const onMessage = (
       break;
     }
     case 'RunEngineProbeResponse': {
+      break;
+    }
+    case 'GetTranslationCacheStats': {
+      break;
+    }
+    case 'GetTranslationCacheStatsResponse': {
+      break;
+    }
+    case 'ClearTranslationCache': {
+      break;
+    }
+    case 'ClearTranslationCacheResponse': {
       break;
     }
     case 'PositionSync': {

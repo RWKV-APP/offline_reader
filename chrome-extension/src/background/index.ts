@@ -12,6 +12,7 @@ import {
   engineConfigStorage,
   engineStatusStorage,
   normalizeApiBaseUrl,
+  translationModeStorage,
 } from '@extension/storage';
 import type {
   AllMessage,
@@ -20,6 +21,12 @@ import type {
   EngineProbeResult,
   QueryRequest,
   QueryResponse,
+  QueryStreamDelta,
+  QueryStreamDone,
+  QueryStreamError,
+  QueryStreamMessage,
+  QueryStreamRequest,
+  QueryStreamSnapshot,
   RefreshEngineStatusResponse,
   RunEngineProbeResponse,
   State,
@@ -29,22 +36,56 @@ import type { EngineStatus, ExtensionEngineConfig } from '@extension/storage';
 const localInferenceClient = new LocalInferenceClient();
 const translationCacheStore = new TranslationCacheStore();
 const inFlightTranslations = new Map<string, Promise<string>>();
+const inFlightStreamTranslations = new Map<string, InFlightStreamTranslation>();
+const streamSubscribersByRequestId = new Map<string, StreamSubscriber>();
 const pendingRequests = new Map<string, (response?: AllMessage) => void>();
 const enginePollIntervalMs = 1000;
 const maxConcurrentTranslationRequests = 2;
+const translationQueueDrainDelayMs = 50;
+const activeTabTranslationPriorityBoost = 100000;
+const highlightedTabTranslationPriorityBoost = 80000;
+const focusedWindowTranslationPriorityBoost = 10000;
+const translationStreamPortName = 'translation-stream';
 const engineStatusTransientFailureThreshold = 3;
 const builtinEngineApiBaseUrls: readonly string[] = BUILTIN_EXTENSION_ENGINE_API_BASE_URLS;
 let refreshPromise: Promise<EngineStatus> | null = null;
 let lastEngineFailureSummary: EngineFailureSummary | null = null;
 let activeTranslationRequestCount = 0;
+let translationQueueDrainTimer: ReturnType<typeof setTimeout> | null = null;
+let focusedWindowId: number | null = null;
+let activeTabId: number | null = null;
+let highlightedTabIds = new Set<number>();
 let consecutiveEngineStatusUnreadyCount = 0;
 let lastReadyEngineStatus: EngineStatus | null = null;
+let engineReady = false;
 
 interface QueuedTranslationTask {
   request: QueryRequest['body'];
+  tabContext: TranslationTabContext;
   run: () => Promise<string>;
   resolve: (translation: string) => void;
   reject: (error: unknown) => void;
+}
+
+interface TranslationTabContext {
+  tabId: number | null;
+  windowId: number | null;
+  active: boolean;
+  highlighted: boolean;
+}
+
+interface StreamSubscriber {
+  port: chrome.runtime.Port;
+  request: QueryStreamRequest['body'];
+  cacheKey: string;
+}
+
+interface InFlightStreamTranslation {
+  request: QueryStreamRequest['body'];
+  modelFingerprint: string;
+  abortController: AbortController;
+  subscribers: Map<string, StreamSubscriber>;
+  translation: string;
 }
 
 const queuedTranslationTasks: QueuedTranslationTask[] = [];
@@ -54,6 +95,7 @@ const state: State = {
   interactionMode: 'full',
   demoMode: false,
   ignored: false,
+  translationEnabled: true,
   running: false,
   ignoreHref,
   inspecting: false,
@@ -62,7 +104,47 @@ const state: State = {
 
 const canRunTranslations = (engineStatus: EngineStatus) => engineStatus.connected && engineStatus.models.length > 0;
 
+const updateRunningState = () => {
+  state.running = state.translationEnabled && engineReady;
+};
+
+const getTranslationTabContext = (sender?: chrome.runtime.MessageSender): TranslationTabContext => {
+  const tab = sender?.tab;
+  return {
+    tabId: typeof tab?.id === 'number' ? tab.id : null,
+    windowId: typeof tab?.windowId === 'number' ? tab.windowId : null,
+    active: tab?.active === true,
+    highlighted: tab?.highlighted === true,
+  };
+};
+
+const getQueuedTranslationTaskTabPriority = (task: QueuedTranslationTask) => {
+  const { tabContext } = task;
+  let priority = 0;
+
+  if (tabContext.windowId !== null && tabContext.windowId === focusedWindowId) {
+    priority += focusedWindowTranslationPriorityBoost;
+  }
+
+  if (tabContext.tabId !== null && tabContext.tabId === activeTabId) {
+    priority += activeTabTranslationPriorityBoost;
+  } else if (tabContext.tabId !== null && highlightedTabIds.has(tabContext.tabId)) {
+    priority += highlightedTabTranslationPriorityBoost;
+  } else if (tabContext.active) {
+    priority += activeTabTranslationPriorityBoost;
+  } else if (tabContext.highlighted) {
+    priority += highlightedTabTranslationPriorityBoost;
+  }
+
+  return priority;
+};
+
 const compareQueuedTranslationTasks = (a: QueuedTranslationTask, b: QueuedTranslationTask) => {
+  const tabPriorityDifference = getQueuedTranslationTaskTabPriority(b) - getQueuedTranslationTaskTabPriority(a);
+  if (tabPriorityDifference !== 0) {
+    return tabPriorityDifference;
+  }
+
   if (a.request.priority !== b.request.priority) {
     return b.request.priority - a.request.priority;
   }
@@ -70,7 +152,13 @@ const compareQueuedTranslationTasks = (a: QueuedTranslationTask, b: QueuedTransl
   return a.request.tick - b.request.tick;
 };
 
+const sortQueuedTranslationTasks = () => {
+  queuedTranslationTasks.sort(compareQueuedTranslationTasks);
+};
+
 const drainTranslationQueue = () => {
+  sortQueuedTranslationTasks();
+
   while (activeTranslationRequestCount < maxConcurrentTranslationRequests && queuedTranslationTasks.length > 0) {
     const task = queuedTranslationTasks.shift();
     if (!task) {
@@ -93,16 +181,32 @@ const drainTranslationQueue = () => {
   }
 };
 
-const enqueueTranslation = (request: QueryRequest['body'], run: () => Promise<string>) =>
+const scheduleTranslationQueueDrain = () => {
+  if (translationQueueDrainTimer !== null) {
+    return;
+  }
+
+  translationQueueDrainTimer = setTimeout(() => {
+    translationQueueDrainTimer = null;
+    drainTranslationQueue();
+  }, translationQueueDrainDelayMs);
+};
+
+const enqueueTranslation = (
+  request: QueryRequest['body'],
+  tabContext: TranslationTabContext,
+  run: () => Promise<string>,
+) =>
   new Promise<string>((resolve, reject) => {
     queuedTranslationTasks.push({
       request,
+      tabContext,
       run,
       resolve,
       reject,
     });
-    queuedTranslationTasks.sort(compareQueuedTranslationTasks);
-    drainTranslationQueue();
+    sortQueuedTranslationTasks();
+    scheduleTranslationQueueDrain();
   });
 
 const shouldTryBuiltinFallbacks = (apiBaseUrl: string) =>
@@ -274,8 +378,48 @@ const translateWithResolvedConfig = async (engineConfig: ExtensionEngineConfig, 
   }
 };
 
+const translateStreamWithResolvedConfig = async (
+  engineConfig: ExtensionEngineConfig,
+  request: QueryRequest['body'],
+  options: {
+    signal: AbortSignal;
+    onDelta: (delta: string, accumulated: string) => void;
+  },
+) => {
+  let hasDelta = false;
+  const onDelta = (delta: string, accumulated: string) => {
+    hasDelta = true;
+    options.onDelta(delta, accumulated);
+  };
+
+  try {
+    return await localInferenceClient.translateStream(engineConfig, request, {
+      signal: options.signal,
+      onDelta,
+    });
+  } catch (error) {
+    if (options.signal.aborted || hasDelta) {
+      throw error;
+    }
+
+    const resolvedConnection = await resolveEngineConnection(engineConfig);
+    const currentApiBaseUrl = normalizeApiBaseUrl(engineConfig.apiBaseUrl);
+    const resolvedApiBaseUrl = normalizeApiBaseUrl(resolvedConnection.engineConfig.apiBaseUrl);
+
+    if (resolvedConnection.engineStatus.lastError != null || resolvedApiBaseUrl == currentApiBaseUrl) {
+      throw error;
+    }
+
+    return localInferenceClient.translateStream(resolvedConnection.engineConfig, request, {
+      signal: options.signal,
+      onDelta,
+    });
+  }
+};
+
 const persistState = async () => {
   await contentUIStateStorage.updateGlobalState({
+    translationEnabled: state.translationEnabled,
     running: state.running,
     ignored: state.ignored,
     interactionMode: state.interactionMode,
@@ -287,15 +431,21 @@ const persistState = async () => {
 
 const initializeStateFromStorage = async () => {
   try {
-    const [storedState, engineStatus] = await Promise.all([contentUIStateStorage.get(), engineStatusStorage.get()]);
+    const [storedState, translationModeState, engineStatus] = await Promise.all([
+      contentUIStateStorage.get(),
+      translationModeStorage.get(),
+      engineStatusStorage.get(),
+    ]);
 
     state.interactionMode = storedState.interactionMode;
     state.demoMode = storedState.demoMode;
     state.inspecting = storedState.inspecting;
     state.showBBox = storedState.showBBox;
     state.ignored = storedState.ignored;
-    state.running = canRunTranslations(engineStatus);
-    if (state.running) {
+    state.translationEnabled = translationModeState.enabled;
+    engineReady = canRunTranslations(engineStatus);
+    updateRunningState();
+    if (engineReady) {
       rememberReadyEngineStatus(engineStatus);
     }
   } catch (e) {
@@ -322,8 +472,29 @@ const syncStateToContent = async () => {
 };
 
 const applyEngineStatus = async (engineStatus: EngineStatus) => {
-  state.running = canRunTranslations(engineStatus);
+  engineReady = canRunTranslations(engineStatus);
+  updateRunningState();
   await engineStatusStorage.updateStatus(engineStatus);
+  await syncStateToContent();
+};
+
+const cancelInFlightStreamTranslations = () => {
+  for (const inFlight of Array.from(inFlightStreamTranslations.values())) {
+    for (const subscriber of Array.from(inFlight.subscribers.values())) {
+      streamSubscribersByRequestId.delete(subscriber.request.requestId);
+    }
+    inFlight.subscribers.clear();
+    inFlight.abortController.abort();
+  }
+};
+
+const setTranslationEnabled = async (enabled: boolean) => {
+  state.translationEnabled = enabled;
+  updateRunningState();
+  if (!enabled) {
+    cancelInFlightStreamTranslations();
+  }
+  await translationModeStorage.setEnabled(enabled);
   await syncStateToContent();
 };
 
@@ -386,7 +557,33 @@ const rejectPendingRequest = (request: QueryRequest['body'], error: unknown) => 
   });
 };
 
-const handleQueryRequest = async (request: QueryRequest['body']) => {
+const updateQueuedTranslationPriorities = (updates: Array<{ requestId: string; priority: number }>) => {
+  if (updates.length === 0 || queuedTranslationTasks.length === 0) {
+    return;
+  }
+
+  const priorityByRequestId = new Map(updates.map(update => [update.requestId, update.priority]));
+  let changed = false;
+
+  for (const task of queuedTranslationTasks) {
+    const priority = priorityByRequestId.get(task.request.requestId);
+    if (priority === undefined || task.request.priority === priority) {
+      continue;
+    }
+
+    task.request.priority = priority;
+    changed = true;
+  }
+
+  if (!changed) {
+    return;
+  }
+
+  sortQueuedTranslationTasks();
+  scheduleTranslationQueueDrain();
+};
+
+const handleQueryRequest = async (request: QueryRequest['body'], tabContext: TranslationTabContext) => {
   let engineConfig: ExtensionEngineConfig | null = null;
 
   try {
@@ -416,7 +613,7 @@ const handleQueryRequest = async (request: QueryRequest['body']) => {
 
     if (!translationPromise) {
       const resolvedEngineConfig = engineConfig;
-      translationPromise = enqueueTranslation(request, () =>
+      translationPromise = enqueueTranslation(request, tabContext, () =>
         translateWithResolvedConfig(resolvedEngineConfig, request),
       ).then(async translation => {
         if (translation !== '') {
@@ -453,6 +650,242 @@ const handleQueryRequest = async (request: QueryRequest['body']) => {
   } catch (error) {
     recordEngineFailure('translation', engineConfig?.apiBaseUrl ?? '', error);
     rejectPendingRequest(request, error);
+  }
+};
+
+const removeStreamSubscriber = (requestId: string) => {
+  const subscriber = streamSubscribersByRequestId.get(requestId);
+  if (!subscriber) {
+    return;
+  }
+
+  streamSubscribersByRequestId.delete(requestId);
+  const inFlight = inFlightStreamTranslations.get(subscriber.cacheKey);
+  if (!inFlight) {
+    return;
+  }
+
+  inFlight.subscribers.delete(requestId);
+  if (inFlight.subscribers.size === 0) {
+    inFlight.abortController.abort();
+  }
+};
+
+const postStreamMessage = (subscriber: StreamSubscriber, message: QueryStreamMessage) => {
+  try {
+    subscriber.port.postMessage(message);
+  } catch {
+    removeStreamSubscriber(subscriber.request.requestId);
+  }
+};
+
+const streamSnapshotMessage = (
+  subscriber: StreamSubscriber,
+  translation: string,
+  options?: { fromCache?: boolean },
+): QueryStreamSnapshot => ({
+  func: 'QueryStreamSnapshot',
+  body: {
+    requestId: subscriber.request.requestId,
+    source: subscriber.request.source,
+    translation,
+    url: subscriber.request.url,
+    fromCache: options?.fromCache,
+  },
+});
+
+const streamDeltaMessage = (subscriber: StreamSubscriber, delta: string): QueryStreamDelta => ({
+  func: 'QueryStreamDelta',
+  body: {
+    requestId: subscriber.request.requestId,
+    source: subscriber.request.source,
+    delta,
+    url: subscriber.request.url,
+  },
+});
+
+const streamDoneMessage = (
+  subscriber: StreamSubscriber,
+  translation: string,
+  options?: { fromCache?: boolean },
+): QueryStreamDone => ({
+  func: 'QueryStreamDone',
+  body: {
+    requestId: subscriber.request.requestId,
+    source: subscriber.request.source,
+    translation,
+    url: subscriber.request.url,
+    fromCache: options?.fromCache,
+  },
+});
+
+const streamErrorMessage = (subscriber: StreamSubscriber, error: unknown): QueryStreamError => ({
+  func: 'QueryStreamError',
+  body: {
+    requestId: subscriber.request.requestId,
+    source: subscriber.request.source,
+    error: getErrorMessage(error),
+    url: subscriber.request.url,
+  },
+});
+
+const broadcastStreamDelta = (inFlight: InFlightStreamTranslation, delta: string) => {
+  for (const subscriber of Array.from(inFlight.subscribers.values())) {
+    postStreamMessage(subscriber, streamDeltaMessage(subscriber, delta));
+  }
+};
+
+const broadcastStreamDone = (inFlight: InFlightStreamTranslation, translation: string) => {
+  for (const subscriber of Array.from(inFlight.subscribers.values())) {
+    postStreamMessage(subscriber, streamDoneMessage(subscriber, translation));
+  }
+};
+
+const broadcastStreamError = (inFlight: InFlightStreamTranslation, error: unknown) => {
+  for (const subscriber of Array.from(inFlight.subscribers.values())) {
+    postStreamMessage(subscriber, streamErrorMessage(subscriber, error));
+  }
+};
+
+const addStreamSubscriber = (inFlight: InFlightStreamTranslation, subscriber: StreamSubscriber) => {
+  inFlight.subscribers.set(subscriber.request.requestId, subscriber);
+  streamSubscribersByRequestId.set(subscriber.request.requestId, subscriber);
+  if (inFlight.translation !== '') {
+    postStreamMessage(subscriber, streamSnapshotMessage(subscriber, inFlight.translation));
+  }
+};
+
+const startStreamTranslation = ({
+  engineConfig,
+  request,
+  cacheKey,
+  modelFingerprint,
+  subscriber,
+  tabContext,
+}: {
+  engineConfig: ExtensionEngineConfig;
+  request: QueryStreamRequest['body'];
+  cacheKey: string;
+  modelFingerprint: string;
+  subscriber: StreamSubscriber;
+  tabContext: TranslationTabContext;
+}) => {
+  const inFlight: InFlightStreamTranslation = {
+    request,
+    modelFingerprint,
+    abortController: new AbortController(),
+    subscribers: new Map(),
+    translation: '',
+  };
+  inFlightStreamTranslations.set(cacheKey, inFlight);
+  addStreamSubscriber(inFlight, subscriber);
+
+  void enqueueTranslation(request, tabContext, async () => {
+    try {
+      if (inFlight.subscribers.size === 0) {
+        return '';
+      }
+
+      const translation = await translateStreamWithResolvedConfig(engineConfig, request, {
+        signal: inFlight.abortController.signal,
+        onDelta: (delta, accumulated) => {
+          inFlight.translation = accumulated;
+          broadcastStreamDelta(inFlight, delta);
+        },
+      });
+
+      inFlight.translation = translation;
+      if (translation !== '') {
+        await translationCacheStore.set({
+          key: cacheKey,
+          source: request.source,
+          translation,
+          modelFingerprint,
+        });
+      }
+      broadcastStreamDone(inFlight, translation);
+      void refreshEngineStatus();
+      return translation;
+    } catch (error) {
+      const canceledWithoutSubscribers = inFlight.abortController.signal.aborted && inFlight.subscribers.size === 0;
+      if (!canceledWithoutSubscribers) {
+        recordEngineFailure('translation', engineConfig.apiBaseUrl, error);
+        broadcastStreamError(inFlight, error);
+        void refreshEngineStatus();
+      }
+      return '';
+    } finally {
+      for (const subscriber of Array.from(inFlight.subscribers.values())) {
+        streamSubscribersByRequestId.delete(subscriber.request.requestId);
+      }
+      inFlight.subscribers.clear();
+      inFlightStreamTranslations.delete(cacheKey);
+    }
+  });
+
+  return inFlight;
+};
+
+const handleQueryStreamRequest = async (
+  request: QueryStreamRequest['body'],
+  tabContext: TranslationTabContext,
+  port: chrome.runtime.Port,
+  isClosed: () => boolean,
+) => {
+  let engineConfig: ExtensionEngineConfig | null = null;
+
+  try {
+    engineConfig = await engineConfigStorage.get();
+    const engineStatus = await engineStatusStorage.get();
+    const modelFingerprint = getTranslationCacheModelFingerprint(engineConfig, engineStatus);
+    const cacheKey = await createTranslationCacheKey({
+      source: request.source,
+      modelFingerprint,
+    });
+    if (isClosed()) return;
+
+    const subscriber: StreamSubscriber = {
+      port,
+      request,
+      cacheKey,
+    };
+    const cachedTranslation = await translationCacheStore.get(cacheKey);
+    if (isClosed()) return;
+
+    if (cachedTranslation !== null) {
+      postStreamMessage(
+        subscriber,
+        streamSnapshotMessage(subscriber, cachedTranslation.translation, { fromCache: true }),
+      );
+      postStreamMessage(subscriber, streamDoneMessage(subscriber, cachedTranslation.translation, { fromCache: true }));
+      return;
+    }
+
+    const existingInFlight = inFlightStreamTranslations.get(cacheKey);
+    if (existingInFlight) {
+      addStreamSubscriber(existingInFlight, subscriber);
+      return;
+    }
+
+    startStreamTranslation({
+      engineConfig,
+      request,
+      cacheKey,
+      modelFingerprint,
+      subscriber,
+      tabContext,
+    });
+  } catch (error) {
+    if (engineConfig !== null) {
+      recordEngineFailure('translation', engineConfig.apiBaseUrl, error);
+    }
+    const subscriber = streamSubscribersByRequestId.get(request.requestId) ?? {
+      port,
+      request,
+      cacheKey: '',
+    };
+    postStreamMessage(subscriber, streamErrorMessage(subscriber, error));
+    void refreshEngineStatus();
   }
 };
 
@@ -582,6 +1015,31 @@ const runEngineProbeAndRespond = (sendResponse: (response?: RunEngineProbeRespon
   });
 };
 
+const refreshFocusedTabContext = async () => {
+  try {
+    const [activeTabs, highlightedTabs] = await Promise.all([
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }),
+      chrome.tabs.query({ highlighted: true, lastFocusedWindow: true }),
+    ]);
+    const activeTab = activeTabs[0];
+
+    activeTabId = typeof activeTab?.id === 'number' ? activeTab.id : null;
+    focusedWindowId = typeof activeTab?.windowId === 'number' ? activeTab.windowId : null;
+    highlightedTabIds = new Set(
+      highlightedTabs.map(tab => tab.id).filter((tabId): tabId is number => typeof tabId === 'number'),
+    );
+
+    sortQueuedTranslationTasks();
+    scheduleTranslationQueueDrain();
+  } catch (error) {
+    console.warn('刷新当前 tab 优先级失败:', error);
+  }
+};
+
+const handleFocusedTabContextChanged = () => {
+  void refreshFocusedTabContext();
+};
+
 const listenMessageForUI = (
   message: AllMessage,
   sender: chrome.runtime.MessageSender,
@@ -591,8 +1049,12 @@ const listenMessageForUI = (
     switch (message.func) {
       case 'QueryRequest': {
         pendingRequests.set(message.body.requestId, sendResponse as (response?: AllMessage) => void);
-        void handleQueryRequest(message.body);
+        void handleQueryRequest(message.body, getTranslationTabContext(sender));
         return true;
+      }
+      case 'UpdateTranslationPriorities': {
+        updateQueuedTranslationPriorities(message.body.priorities);
+        return false;
       }
       case 'GetState': {
         sendResponse({
@@ -610,6 +1072,10 @@ const listenMessageForUI = (
         state.showBBox = message.showBBox;
 
         void syncStateToContent();
+        return false;
+      }
+      case 'SetTranslationEnabled': {
+        void setTranslationEnabled(message.enabled);
         return false;
       }
       case 'RefreshEngineStatus': {
@@ -646,6 +1112,12 @@ const listenMessageForUI = (
         return false;
       }
       case 'QueryResponse':
+      case 'QueryStreamRequest':
+      case 'QueryStreamSnapshot':
+      case 'QueryStreamDelta':
+      case 'QueryStreamDone':
+      case 'QueryStreamError':
+      case 'QueryStreamCancel':
       case 'OnStateChanged':
       case 'GetStateResponse':
       case 'RefreshEngineStatusResponse':
@@ -664,17 +1136,54 @@ const listenMessageForUI = (
   return false;
 };
 
+const listenTranslationStreamPort = (port: chrome.runtime.Port) => {
+  if (port.name !== translationStreamPortName) {
+    return;
+  }
+
+  let requestId: string | null = null;
+  let closed = false;
+
+  port.onMessage.addListener((message: QueryStreamMessage) => {
+    if (message.func === 'QueryStreamRequest') {
+      requestId = message.body.requestId;
+      void handleQueryStreamRequest(message.body, getTranslationTabContext(port.sender), port, () => closed);
+      return;
+    }
+
+    if (message.func === 'QueryStreamCancel') {
+      removeStreamSubscriber(message.body.requestId);
+    }
+  });
+
+  port.onDisconnect.addListener(() => {
+    closed = true;
+    if (requestId !== null) {
+      removeStreamSubscriber(requestId);
+    }
+  });
+};
+
 const startListenMessage = () => {
   stopListenMessage();
   chrome.runtime.onMessage.addListener(listenMessageForUI);
+  chrome.runtime.onConnect.addListener(listenTranslationStreamPort);
+  chrome.tabs.onActivated.addListener(handleFocusedTabContextChanged);
+  chrome.tabs.onHighlighted.addListener(handleFocusedTabContextChanged);
+  chrome.windows.onFocusChanged.addListener(handleFocusedTabContextChanged);
 };
 
 const stopListenMessage = () => {
   chrome.runtime.onMessage.removeListener(listenMessageForUI);
+  chrome.runtime.onConnect.removeListener(listenTranslationStreamPort);
+  chrome.tabs.onActivated.removeListener(handleFocusedTabContextChanged);
+  chrome.tabs.onHighlighted.removeListener(handleFocusedTabContextChanged);
+  chrome.windows.onFocusChanged.removeListener(handleFocusedTabContextChanged);
 };
 
 void initializeStateFromStorage().then(async () => {
   startListenMessage();
+  await refreshFocusedTabContext();
   await syncStateToContent();
   await refreshEngineStatus();
 });

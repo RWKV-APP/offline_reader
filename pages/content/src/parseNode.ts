@@ -2,7 +2,8 @@ import { checkBreakLineHappened } from './checkBreakLineHappened';
 import { getPriority } from './getPriority';
 import { simenticallyEqual } from './simenticallyEqual';
 import { state } from './state';
-import { formatTranslation, ignoreHref, isChinese, isUrl, queryTranslation, rwkvClass } from '@extension/shared';
+import { createTypewriter } from './typewriter';
+import { formatTranslation, ignoreHref, isChinese, isUrl, queryTranslationStream, rwkvClass } from '@extension/shared';
 
 const ignoreTypeLower = ['path', 'script', 'style', 'svg', 'noscript', 'head', 'pre', 'code', 'math', 'textarea'];
 const ignoreTypeUpper = ignoreTypeLower.map(item => item.toUpperCase());
@@ -11,10 +12,52 @@ const checkingTypeLower = ['turbo-frame', 'article', 'main'];
 // const checkingTypeLower: string[] = [];
 const checkingTypeUpper = checkingTypeLower.map(item => item.toUpperCase());
 const checkingTypes = checkingTypeLower.concat(checkingTypeUpper);
+const pendingPrioritySyncDelayMs = 150;
 let tick = 0;
+let pendingPrioritySyncTimer: number | null = null;
 
 export const forceBreakLineTags = ['ul', 'ol', 'li'];
 export const forceBreakLineTagsUpper = forceBreakLineTags.map(item => item.toUpperCase());
+
+const syncPendingTranslationPriorities = () => {
+  const priorities = Array.from(
+    document.querySelectorAll<HTMLElement>(
+      `.${rwkvClass.target}[data-rwkv-translation-state="streaming"][data-rwkv-translation-request-id]`,
+    ),
+  ).map(node => ({
+    requestId: node.dataset.rwkvTranslationRequestId ?? '',
+    priority: getPriority(node),
+  }));
+  const validPriorities = priorities.filter(priority => priority.requestId !== '');
+
+  if (validPriorities.length === 0) {
+    return;
+  }
+
+  try {
+    chrome.runtime.sendMessage({
+      func: 'UpdateTranslationPriorities',
+      body: {
+        priorities: validPriorities,
+      },
+    });
+  } catch (error) {
+    console.warn('同步翻译优先级失败:', error);
+  }
+};
+
+export const schedulePendingTranslationPrioritySync = () => {
+  if (pendingPrioritySyncTimer !== null) {
+    return;
+  }
+
+  pendingPrioritySyncTimer = window.setTimeout(() => {
+    requestAnimationFrame(() => {
+      pendingPrioritySyncTimer = null;
+      syncPendingTranslationPriorities();
+    });
+  }, pendingPrioritySyncDelayMs);
+};
 
 export const parseNode = (_node: Node): boolean => {
   const currentUrl = window.location.href;
@@ -103,7 +146,7 @@ export const parseNode = (_node: Node): boolean => {
     return true;
   }
 
-  if (node.classList.contains(rwkvClass.done)) return false;
+  if (node.classList.contains(rwkvClass.done) || node.dataset.rwkvTranslationState === 'streaming') return false;
 
   const childNodes = Array.from(node.childNodes) as HTMLElement[];
   let nonTextChildNodesTextContent = '';
@@ -147,38 +190,169 @@ export const parseNode = (_node: Node): boolean => {
   nodeToBeAdded.classList.add(rwkvClass.result);
   nodeToBeAdded.dataset.rwkvLayout = breakLineHappened ? 'block' : 'inline';
   if (state.inspecting) nodeToBeAdded.classList.add(rwkvClass.inspect);
+  node.appendChild(nodeToBeAdded);
+  node.dataset.rwkvTranslationState = 'streaming';
+
   const priority = getPriority(node);
   tick++;
-  queryTranslation({ source: textContent, logic: 'translate', url: currentUrl, nodeName, priority, tick })
-    .then(json => {
-      if (node.classList.contains(rwkvClass.done)) return;
 
-      const { translation, source } = json.body;
-      if (!translation) return;
-      const translationHasNoDifference = simenticallyEqual(translation, source);
-      if (translationHasNoDifference) return;
+  let rawTranslation = '';
+  let streamController: ReturnType<typeof queryTranslationStream> | null = null;
+  let streamFinished = false;
+  let cacheHit = false;
 
-      let inner = formatTranslation(translation);
-      if (!breakLineHappened) inner = ' ' + inner;
-      nodeToBeAdded.textContent = inner;
+  const clearStreamingState = () => {
+    if (node.dataset.rwkvTranslationState === 'streaming') {
+      delete node.dataset.rwkvTranslationState;
+    }
+    delete node.dataset.rwkvTranslationRequestId;
+  };
 
-      if (state.inspecting) {
-        if (!nodeToBeAdded.classList.contains(rwkvClass.inspect)) nodeToBeAdded.classList.add(rwkvClass.inspect);
-      } else {
-        if (nodeToBeAdded.classList.contains(rwkvClass.inspect)) nodeToBeAdded.classList.remove(rwkvClass.inspect);
-      }
+  const removeSpinner = () => {
+    if (loadingSpinner.parentElement === node) loadingSpinner.remove();
+  };
 
-      node.appendChild(nodeToBeAdded);
-      node.classList.add(rwkvClass.done);
-      if (state.inspecting) {
-        if (!node.classList.contains(rwkvClass.inspect)) node.classList.add(rwkvClass.inspect);
-      } else {
-        if (node.classList.contains(rwkvClass.inspect)) node.classList.remove(rwkvClass.inspect);
-      }
-    })
-    .finally(() => {
-      if (loadingSpinner.parentElement === node) loadingSpinner.remove();
+  const isActive = () =>
+    state.running &&
+    node.isConnected &&
+    node.dataset.rwkvTranslationState === 'streaming' &&
+    (streamController === null || node.dataset.rwkvTranslationRequestId === streamController.requestId);
+
+  const typewriter = createTypewriter({
+    write: value => {
+      nodeToBeAdded.textContent = value;
+    },
+    isActive,
+  });
+
+  const monitorId = window.setInterval(() => {
+    if (isActive()) return;
+    streamController?.cancel();
+    typewriter.stop();
+    removeSpinner();
+    if (nodeToBeAdded.parentElement === node) nodeToBeAdded.remove();
+    clearStreamingState();
+    window.clearInterval(monitorId);
+  }, 1000);
+
+  const stopMonitor = () => {
+    window.clearInterval(monitorId);
+  };
+
+  const formatForDisplay = (translation: string) => {
+    const formatted = formatTranslation(translation);
+    if (formatted === '') return '';
+    return breakLineHappened ? formatted : ` ${formatted}`;
+  };
+
+  const syncInspectClasses = () => {
+    if (state.inspecting) {
+      if (!nodeToBeAdded.classList.contains(rwkvClass.inspect)) nodeToBeAdded.classList.add(rwkvClass.inspect);
+      if (!node.classList.contains(rwkvClass.inspect)) node.classList.add(rwkvClass.inspect);
+      return;
+    }
+
+    if (nodeToBeAdded.classList.contains(rwkvClass.inspect)) nodeToBeAdded.classList.remove(rwkvClass.inspect);
+    if (node.classList.contains(rwkvClass.inspect)) node.classList.remove(rwkvClass.inspect);
+  };
+
+  const finishNode = () => {
+    syncInspectClasses();
+    node.classList.add(rwkvClass.done);
+    clearStreamingState();
+    stopMonitor();
+  };
+
+  const finishWithoutOutput = () => {
+    removeSpinner();
+    typewriter.finish('', () => {
+      if (nodeToBeAdded.parentElement === node) nodeToBeAdded.remove();
+      finishNode();
     });
+  };
+
+  const finishWithoutOutputImmediately = () => {
+    typewriter.stop();
+    removeSpinner();
+    nodeToBeAdded.textContent = '';
+    if (nodeToBeAdded.parentElement === node) nodeToBeAdded.remove();
+    finishNode();
+  };
+
+  const finishWithOutputImmediately = (translation: string) => {
+    typewriter.stop();
+    removeSpinner();
+    nodeToBeAdded.textContent = formatForDisplay(translation);
+    finishNode();
+  };
+
+  const failNode = (error: string) => {
+    console.warn('translation stream failed', error);
+    streamFinished = true;
+    typewriter.stop();
+    removeSpinner();
+    if (nodeToBeAdded.parentElement === node) nodeToBeAdded.remove();
+    clearStreamingState();
+    stopMonitor();
+  };
+
+  streamController = queryTranslationStream(
+    { source: textContent, logic: 'translate', url: currentUrl, nodeName, priority, tick },
+    {
+      onSnapshot: message => {
+        if (!isActive()) return;
+        rawTranslation = message.body.translation;
+        if (message.body.fromCache === true) {
+          cacheHit = true;
+          typewriter.stop();
+          removeSpinner();
+          nodeToBeAdded.textContent =
+            rawTranslation === '' || simenticallyEqual(rawTranslation, message.body.source)
+              ? ''
+              : formatForDisplay(rawTranslation);
+          return;
+        }
+
+        typewriter.setTarget(formatForDisplay(rawTranslation));
+      },
+      onDelta: message => {
+        if (!isActive() || streamFinished) return;
+        rawTranslation += message.body.delta;
+        typewriter.setTarget(formatForDisplay(rawTranslation));
+      },
+      onDone: message => {
+        if (!isActive()) return;
+        streamFinished = true;
+        removeSpinner();
+
+        const { translation, source } = message.body;
+        const shouldRenderOutput = translation !== '' && !simenticallyEqual(translation, source);
+        const shouldSkipTypewriter = cacheHit || message.body.fromCache === true;
+
+        if (!shouldRenderOutput) {
+          if (shouldSkipTypewriter) {
+            finishWithoutOutputImmediately();
+            return;
+          }
+
+          finishWithoutOutput();
+          return;
+        }
+
+        if (shouldSkipTypewriter) {
+          finishWithOutputImmediately(translation);
+          return;
+        }
+
+        typewriter.finish(formatForDisplay(translation), finishNode);
+      },
+      onError: message => {
+        if (!isActive()) return;
+        failNode(message.body.error);
+      },
+    },
+  );
+  node.dataset.rwkvTranslationRequestId = streamController.requestId;
 
   return true;
 };

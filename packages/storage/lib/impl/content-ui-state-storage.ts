@@ -14,6 +14,7 @@ const storage = createStorage<ContentUIStateType>(
   'content-ui-state-storage-key',
   {
     // Global state defaults
+    translationEnabled: true,
     running: false,
     ignored: false,
     interactionMode: 'hover',

@@ -1,5 +1,5 @@
 import { injectCss } from './injectcss';
-import { parseNode } from './parseNode';
+import { parseNode, schedulePendingTranslationPrioritySync } from './parseNode';
 import { startPositionMonitoring, stopPositionMonitoring } from './positionMonitor';
 import { state } from './state';
 import { ignoreHref, rwkvClass, rwkvEvent } from '@extension/shared';
@@ -13,10 +13,20 @@ export const contentStart = () => {
   injectCss();
 
   const handleStateChanged = (event: CustomEvent) => {
-    const { interactionMode, demoMode, ignored, running, inspecting, showBBox } = event.detail;
+    const {
+      interactionMode,
+      demoMode,
+      ignored,
+      translationEnabled = true,
+      running,
+      inspecting,
+      showBBox,
+    } = event.detail;
     state.interactionMode = interactionMode;
     state.demoMode = demoMode;
     state.ignored = ignored;
+    state.translationEnabled = translationEnabled;
+    document.documentElement.classList.toggle(rwkvClass.paused, !translationEnabled);
     const runningChanged = state.running !== running;
     state.running = running;
     const inspectingChanged = state.inspecting !== inspecting;
@@ -99,13 +109,25 @@ export const contentStart = () => {
       }
       case 'QueryRequest':
       case 'QueryResponse':
+      case 'QueryStreamRequest':
+      case 'QueryStreamSnapshot':
+      case 'QueryStreamDelta':
+      case 'QueryStreamDone':
+      case 'QueryStreamError':
+      case 'QueryStreamCancel':
+      case 'UpdateTranslationPriorities':
       case 'SetState':
+      case 'SetTranslationEnabled':
       case 'GetState':
       case 'PositionSync':
       case 'PositionSyncResponse':
       case 'RefreshEngineStatus':
       case 'RefreshEngineStatusResponse':
       case 'RunEngineProbe':
+      case 'GetTranslationCacheStats':
+      case 'GetTranslationCacheStatsResponse':
+      case 'ClearTranslationCache':
+      case 'ClearTranslationCacheResponse':
       case 'RunEngineProbeResponse': {
         // 这些消息在 content script 中不需要处理
         break;
@@ -195,6 +217,13 @@ export const contentStart = () => {
 
   // Initialize the key listener
   initializeKeyListeners();
+
+  const handleViewportPriorityChange = () => {
+    schedulePendingTranslationPrioritySync();
+  };
+
+  window.addEventListener('scroll', handleViewportPriorityChange, { passive: true });
+  window.addEventListener('resize', handleViewportPriorityChange, { passive: true });
 
   const observer = new MutationObserver(mutationsList => {
     const currentUrl = window.location.href;

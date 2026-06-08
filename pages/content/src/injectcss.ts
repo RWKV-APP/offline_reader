@@ -1,3 +1,5 @@
+import { rwkvClass } from '@extension/shared';
+
 export const injectCss = () => {
   const style = document.createElement('style');
   style.textContent = `
@@ -86,10 +88,14 @@ export const injectCss = () => {
   }
 }
 
-.rwkvOfflineTranslationResult.rwkvInspecting {
-  background-color: rgba(0, 255, 0, 0.5) !important;
-  outline: 1px solid rgba(0, 255, 0, 1) !important;
-}
-`;
+	.rwkvOfflineTranslationResult.rwkvInspecting {
+	  background-color: rgba(0, 255, 0, 0.5) !important;
+	  outline: 1px solid rgba(0, 255, 0, 1) !important;
+	}
+
+	html.${rwkvClass.paused} .${rwkvClass.result} {
+	  display: none !important;
+	}
+	`;
   document.head.appendChild(style);
 };

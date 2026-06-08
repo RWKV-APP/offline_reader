@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 export const useContentUIState = () => {
   // 全局状态通过storage管理
   const globalState = useStorage(contentUIStateStorage);
+  const translationEnabled = globalState.translationEnabled ?? true;
 
   // 本地UI状态，需要即时响应，不需要持久化
   const [hovered, setHovered] = useState(false);
@@ -14,10 +15,11 @@ export const useContentUIState = () => {
   useEffect(() => {
     const handleStateChanged = (event: CustomEvent) => {
       try {
-        const { running, interactionMode, demoMode, inspecting, showBBox } = event.detail;
+        const { translationEnabled = true, running, interactionMode, demoMode, inspecting, showBBox } = event.detail;
 
         // 只更新从 background 传来的状态，保持本地状态不变
         contentUIStateStorage.updateGlobalState({
+          translationEnabled,
           running,
           ignored: ignoreHref.some(href => window.location.href.startsWith(href)),
           interactionMode,
@@ -55,6 +57,7 @@ export const useContentUIState = () => {
   return {
     // 全局状态
     ...globalState,
+    translationEnabled,
 
     // 本地UI状态
     hovered,
@@ -98,6 +101,16 @@ export const useContentUIState = () => {
         contentUIStateStorage.toggleBBox();
       } catch (error) {
         console.error('Error toggling HUD diagnose mode:', error);
+      }
+    },
+    toggleTranslationEnabled: () => {
+      try {
+        chrome.runtime.sendMessage({
+          func: 'SetTranslationEnabled',
+          enabled: !translationEnabled,
+        });
+      } catch (error) {
+        console.error('Error toggling translation enabled:', error);
       }
     },
 

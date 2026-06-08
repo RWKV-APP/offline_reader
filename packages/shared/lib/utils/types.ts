@@ -39,12 +39,89 @@ export interface QueryResponse {
   };
 }
 
+export interface QueryStreamRequest {
+  func: 'QueryStreamRequest';
+  body: QueryRequest['body'];
+}
+
+export interface QueryStreamSnapshot {
+  func: 'QueryStreamSnapshot';
+  body: {
+    requestId: string;
+    source: string;
+    translation: string;
+    url: string;
+    fromCache?: boolean;
+  };
+}
+
+export interface QueryStreamDelta {
+  func: 'QueryStreamDelta';
+  body: {
+    requestId: string;
+    source: string;
+    delta: string;
+    url: string;
+  };
+}
+
+export interface QueryStreamDone {
+  func: 'QueryStreamDone';
+  body: {
+    requestId: string;
+    source: string;
+    translation: string;
+    url: string;
+    fromCache?: boolean;
+  };
+}
+
+export interface QueryStreamError {
+  func: 'QueryStreamError';
+  body: {
+    requestId: string;
+    source: string;
+    error: string;
+    url: string;
+  };
+}
+
+export interface QueryStreamCancel {
+  func: 'QueryStreamCancel';
+  body: {
+    requestId: string;
+  };
+}
+
+export interface UpdateTranslationPriorities {
+  func: 'UpdateTranslationPriorities';
+  body: {
+    priorities: Array<{
+      requestId: string;
+      priority: number;
+    }>;
+  };
+}
+
+export type QueryStreamMessage =
+  | QueryStreamRequest
+  | QueryStreamSnapshot
+  | QueryStreamDelta
+  | QueryStreamDone
+  | QueryStreamError
+  | QueryStreamCancel;
+
 export interface SetState {
   func: 'SetState';
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   inspecting: boolean;
   showBBox: boolean;
+}
+
+export interface SetTranslationEnabled {
+  func: 'SetTranslationEnabled';
+  enabled: boolean;
 }
 
 export interface OnStateChanged extends State {
@@ -140,7 +217,15 @@ export interface ClearTranslationCacheResponse {
 export type AllMessage =
   | QueryRequest
   | QueryResponse
+  | QueryStreamRequest
+  | QueryStreamSnapshot
+  | QueryStreamDelta
+  | QueryStreamDone
+  | QueryStreamError
+  | QueryStreamCancel
+  | UpdateTranslationPriorities
   | SetState
+  | SetTranslationEnabled
   | OnStateChanged
   | GetState
   | GetStateResponse
@@ -159,6 +244,7 @@ export interface State {
   interactionMode: 'hover' | 'full';
   demoMode: boolean;
   ignored: boolean;
+  translationEnabled: boolean;
   running: boolean;
   ignoreHref: string[];
   inspecting: boolean;

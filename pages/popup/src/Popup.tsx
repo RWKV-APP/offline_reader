@@ -172,6 +172,7 @@ const Popup = () => {
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const hasModels = engineStatus.models.length > 0;
+  const translationEnabled = contentUIState.translationEnabled ?? true;
   const statusLabel = getConnectionLabel(engineStatus.connected, hasModels);
   const statusTone = getConnectionTone(engineStatus.connected, hasModels);
 
@@ -273,6 +274,7 @@ const Popup = () => {
         lastError: engineStatus.lastError,
       },
       contentState: {
+        translationEnabled,
         translationInjection: contentUIState.running,
         ignored: contentUIState.ignored,
         inspecting: contentUIState.inspecting,
@@ -429,7 +431,11 @@ const Popup = () => {
         <div className="space-y-1">
           <StatusRow label="传输方式" value="OpenAI Local API" />
           <StatusRow label="端口" value={engineStatus.port === null ? '—' : String(engineStatus.port)} />
-          <StatusRow label="翻译注入" value={contentUIState.running ? '已启用' : '待命'} />
+          <StatusRow label="翻译总开关" value={translationEnabled ? '已开启' : '已关闭'} />
+          <StatusRow
+            label="翻译注入"
+            value={contentUIState.running ? '运行中' : translationEnabled ? '待命' : '已关闭'}
+          />
           <StatusRow label="已加载模型" value={hasModels ? `${engineStatus.models.length} 个` : '无'} />
           <StatusRow label="最近刷新" value={formatTimestamp(lastRefreshAt)} />
           <StatusRow label="最近探测" value={getProbeSummary(probeResult)} />
