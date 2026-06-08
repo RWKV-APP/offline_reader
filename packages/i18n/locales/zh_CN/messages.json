@@ -1,7 +1,7 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "通过 RWKV Chat 客户端, 在您的电脑上直接执行网页翻译操作"
+    "message": "通过 RWKV_APP 本地 OpenAI 兼容接口，在您的电脑上直接执行网页翻译操作"
   },
   "extensionName": {
     "description": "Extension name",

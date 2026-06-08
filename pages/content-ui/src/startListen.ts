@@ -25,6 +25,18 @@ const onMessage = (
     case 'GetState': {
       break;
     }
+    case 'RefreshEngineStatus': {
+      break;
+    }
+    case 'RefreshEngineStatusResponse': {
+      break;
+    }
+    case 'RunEngineProbe': {
+      break;
+    }
+    case 'RunEngineProbeResponse': {
+      break;
+    }
     case 'PositionSync': {
       // 触发自定义事件，让UI组件处理
       document.dispatchEvent(new CustomEvent('ceb-position-sync', { detail: message.body }));

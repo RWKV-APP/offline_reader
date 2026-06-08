@@ -1,27 +1,18 @@
-## 使用方法 (内部版)
+## 使用方法
 
-1. 下载 RWKV Chat 桌面版
-2. 打开 RWKV Chat 桌面版
-3. 点击 "离线翻译"
-4. 在弹出的面板中选择一个翻译模型
-   1. 模型越大, 效果越好, 速度越慢
-5. 下载 chrome 扩展安装包 `dist.crx`
-6. 下载 CRX Extractor/Downloader
-7. 使用解压缩 dist.crx
-8. 打开 chrome extensions 页面
-9. 开启开发者模式
-10. 选择 Load unpacked
-11. 选择解压缩后的文件夹
-12. 点击 "确定"
-13. 刷新页面
+1. 打开 `RWKV_APP`
+2. 在 `RWKV_APP` 中启动 OpenAI 兼容的本地服务器
+3. 确认默认地址为 `http://127.0.0.1:52345`
+4. 安装本扩展
+5. 打开扩展 popup，确认状态为“已连接”
+6. 如果本地 API 地址不同，在 popup 中修改 `API Base URL`
+7. 刷新目标网页
 
-## 使用方法 (已经在 Chrome Web Store 上架)
+## 开发模式安装
 
-1. 下载 RWKV Chat 桌面版
-2. 打开 RWKV Chat 桌面版
-3. 点击 "离线翻译"
-4. 在弹出的面板中选择一个翻译模型
-   1. 模型越大, 效果越好, 速度越慢
-5. 在 Chrome Extension Store 中搜索 "RWKV Offline Translator"
-6. 点击 Add to Chrome
-7. 刷新页面
+1. 运行 `pnpm install`
+2. 运行 `pnpm build`
+3. 打开 Chrome 扩展管理页
+4. 开启开发者模式
+5. 选择 `Load unpacked`
+6. 选择仓库里的 `dist` 目录

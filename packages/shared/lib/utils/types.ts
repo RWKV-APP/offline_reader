@@ -1,4 +1,5 @@
 import type { COLORS } from './const.js';
+import type { EngineStatus } from '@extension/storage';
 import type { TupleToUnion } from 'type-fest';
 
 export type * from 'type-fest';
@@ -15,6 +16,7 @@ export type ManifestType = chrome.runtime.ManifestV3;
 export interface QueryRequest {
   func: 'QueryRequest';
   body: {
+    requestId: string;
     source: string;
     logic: 'translate' | 'loop';
     url: string;
@@ -30,6 +32,7 @@ export interface QueryRequest {
 export interface QueryResponse {
   func: 'QueryResponse';
   body: {
+    requestId: string;
     source: string;
     translation: string;
     url: string;
@@ -56,6 +59,48 @@ export interface GetStateResponse extends State {
   func: 'GetStateResponse';
 }
 
+export interface RefreshEngineStatus {
+  func: 'RefreshEngineStatus';
+}
+
+export interface RefreshEngineStatusResponse {
+  func: 'RefreshEngineStatusResponse';
+  body: EngineStatus;
+  recentFailure: EngineFailureSummary | null;
+}
+
+export type EngineProbeStage = 'status' | 'completion' | 'done';
+export type EngineFailureStage = EngineProbeStage | 'translation';
+
+export interface EngineFailureSummary {
+  stage: EngineFailureStage;
+  apiBaseUrl: string;
+  error: string;
+  checkedAt: string;
+}
+
+export interface EngineProbeResult {
+  ok: boolean;
+  stage: EngineProbeStage;
+  apiBaseUrl: string;
+  port: number | null;
+  models: string[];
+  durationMs: number;
+  error: string | null;
+  sampleOutputPreview: string;
+  checkedAt: string;
+  recentFailure: EngineFailureSummary | null;
+}
+
+export interface RunEngineProbe {
+  func: 'RunEngineProbe';
+}
+
+export interface RunEngineProbeResponse {
+  func: 'RunEngineProbeResponse';
+  body: EngineProbeResult;
+}
+
 export type AllMessage =
   | QueryRequest
   | QueryResponse
@@ -63,10 +108,12 @@ export type AllMessage =
   | OnStateChanged
   | GetState
   | GetStateResponse
+  | RefreshEngineStatus
+  | RefreshEngineStatusResponse
+  | RunEngineProbe
+  | RunEngineProbeResponse
   | PositionSync
-  | PositionSyncResponse
-  | PageSizeSync
-  | PageSizeSyncResponse;
+  | PositionSyncResponse;
 
 export interface State {
   interactionMode: 'hover' | 'full';
@@ -109,39 +156,6 @@ export interface PositionSync {
  */
 export interface PositionSyncResponse {
   func: 'PositionSyncResponse';
-  body: {
-    success: boolean;
-  };
-}
-
-/**
- * 页面尺寸信息
- */
-export interface PageSizeInfo {
-  innerHeight: number;
-  outerHeight: number;
-  innerWidth: number;
-  outerWidth: number;
-  scrollTop: number;
-  scrollLeft: number;
-  scrollHeight: number;
-  scrollWidth: number;
-  tabId: number;
-}
-
-/**
- * 页面尺寸同步消息
- */
-export interface PageSizeSync {
-  func: 'PageSizeSync';
-  body: PageSizeInfo;
-}
-
-/**
- * 页面尺寸同步响应
- */
-export interface PageSizeSyncResponse {
-  func: 'PageSizeSyncResponse';
   body: {
     success: boolean;
   };

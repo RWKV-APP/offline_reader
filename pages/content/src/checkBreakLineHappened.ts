@@ -14,9 +14,17 @@ export const checkBreakLineHappened = (node: HTMLElement) => {
   const textContent = node.textContent?.trim();
   if (!textContent) return false;
 
-  // 方法1: 检查 white-space 属性
-  if (computedStyle.whiteSpace === 'nowrap') {
-    return false; // 强制不换行，所以没有折行
+  const isClippedOverflow = (value: string) => value === 'hidden' || value === 'clip';
+  const hasSingleLineConstraint =
+    computedStyle.whiteSpace === 'nowrap' ||
+    computedStyle.textOverflow === 'ellipsis' ||
+    isClippedOverflow(computedStyle.overflow) ||
+    isClippedOverflow(computedStyle.overflowX) ||
+    isClippedOverflow(computedStyle.overflowY);
+
+  // 单行裁剪场景不适合直接行内追加翻译，否则尾部内容容易被宿主页面裁掉
+  if (hasSingleLineConstraint) {
+    return true;
   }
 
   // 方法2: 检查元素高度是否大于行高

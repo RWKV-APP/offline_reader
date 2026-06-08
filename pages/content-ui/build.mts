@@ -9,28 +9,30 @@ const rootDir = resolve(import.meta.dirname);
 const srcDir = resolve(rootDir, 'src');
 const matchesDir = resolve(srcDir, 'matches');
 
-const configs = Object.entries(getContentScriptEntries(matchesDir)).map(([name, entry]) => ({
-  name,
-  config: withPageConfig({
-    mode: IS_DEV ? 'development' : undefined,
-    resolve: {
-      alias: {
-        '@src': srcDir,
+const configs = Object.entries(getContentScriptEntries(matchesDir))
+  .filter(([name]) => name === 'all')
+  .map(([name, entry]) => ({
+    name,
+    config: withPageConfig({
+      mode: IS_DEV ? 'development' : undefined,
+      resolve: {
+        alias: {
+          '@src': srcDir,
+        },
       },
-    },
-    publicDir: resolve(rootDir, 'public'),
-    plugins: [IS_DEV && makeEntryPointPlugin()],
-    build: {
-      lib: {
-        name: name,
-        formats: ['iife'],
-        entry,
-        fileName: name,
+      publicDir: resolve(rootDir, 'public'),
+      plugins: [IS_DEV && makeEntryPointPlugin()],
+      build: {
+        lib: {
+          name: name,
+          formats: ['iife'],
+          entry,
+          fileName: name,
+        },
+        outDir: resolve(rootDir, '..', '..', 'dist', 'content-ui'),
       },
-      outDir: resolve(rootDir, '..', '..', 'dist', 'content-ui'),
-    },
-  }),
-}));
+    }),
+  }));
 
 const builds = configs.map(async ({ name, config }) => {
   const folder = resolve(matchesDir, name);

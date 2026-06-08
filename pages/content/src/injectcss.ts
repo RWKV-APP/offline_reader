@@ -47,6 +47,19 @@ export const injectCss = () => {
   border-radius: 0;
   opacity: 0.6;
   outline: 2px solid rgba(0, 187, 255, 0.0) !important;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rwkvOfflineTranslationResult[data-rwkv-layout='block'] {
+  display: block;
+  margin-top: 2px;
+}
+
+.rwkvOfflineTranslationResult[data-rwkv-layout='inline'] {
+  display: inline;
 }
 
 /* 浅色主题下的 hover 效果 */

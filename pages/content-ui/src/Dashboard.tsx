@@ -1,12 +1,4 @@
-import {
-  BBox,
-  DemoMode,
-  DiagnoseMode,
-  IgnoredStatus,
-  InteractionMode,
-  RunningStatus,
-  FeedbackButton,
-} from './components';
+import { BBox, DiagnoseMode, IgnoredStatus, RunningStatus, FeedbackButton } from './components';
 import { DashboardEntry } from './DashboardEntry';
 import { useContentUIState } from './hooks/useContentUIState';
 import { useFullscreenDetection } from './hooks/useFullscreenDetection';
@@ -18,8 +10,6 @@ export const Dashboard: FC = () => {
     // 状态
     hovered,
     shouldShowOthers,
-    running,
-    inspecting, // 添加缺失的 inspecting 状态
     // 操作方法
     setHovered,
     setHoveringOthers,

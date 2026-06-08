@@ -66,6 +66,32 @@ export type TranslationModeStorageType = BaseStorageType<TranslationModeStateTyp
   setTargetLanguage: (language: string) => Promise<void>;
 };
 
+export type ExtensionTransport = 'openai-local';
+
+export interface ExtensionEngineConfig {
+  apiBaseUrl: string;
+  requestTimeoutMs: number;
+  transport: ExtensionTransport;
+}
+
+export type EngineConfigStorageType = BaseStorageType<ExtensionEngineConfig> & {
+  setApiBaseUrl: (apiBaseUrl: string) => Promise<void>;
+  setRequestTimeoutMs: (requestTimeoutMs: number) => Promise<void>;
+  reset: () => Promise<void>;
+};
+
+export interface EngineStatus {
+  connected: boolean;
+  models: string[];
+  port: number | null;
+  lastError: string | null;
+}
+
+export type EngineStatusStorageType = BaseStorageType<EngineStatus> & {
+  updateStatus: (status: EngineStatus) => Promise<void>;
+  reset: () => Promise<void>;
+};
+
 export interface ContentUIStateType {
   // Global state from background
   running: boolean;

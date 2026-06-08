@@ -1,11 +1,11 @@
 {
   "extensionDescription": {
     "description": "Extension description",
-    "message": "RWKV Offline Reader for Chrome"
+    "message": "Translate webpages through the RWKV_APP local OpenAI-compatible API"
   },
   "extensionName": {
     "description": "Extension name",
-    "message": "RWKV Offline Reader"
+    "message": "RWKV Offline Translator"
   },
   "toggleTheme": {
     "message": "Toggle theme"

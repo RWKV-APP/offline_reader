@@ -6,5 +6,5 @@ export const baseEnv =
   }).parsed ?? {};
 
 export const dynamicEnvValues = {
-  CEB_NODE_ENV: baseEnv.CEB_DEV === 'true' ? 'development' : 'production',
+  CEB_NODE_ENV: baseEnv.CLI_CEB_DEV === 'true' ? 'development' : 'production',
 } as const;

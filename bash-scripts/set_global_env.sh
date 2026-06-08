@@ -51,6 +51,16 @@ parse_arguments() {
   done
 }
 
+ensure_env_file() {
+  if [ ! -f ".env" ]; then
+    if [ -f ".example.env" ]; then
+      cp .example.env .env
+    else
+      touch .env
+    fi
+  fi
+}
+
 # Validate keys in .env file
 validate_env_keys() {
   editable_section_starts=false
@@ -87,5 +97,6 @@ create_new_file() {
 
 # Main script execution
 parse_arguments "$@"
+ensure_env_file
 validate_env_keys
 create_new_file

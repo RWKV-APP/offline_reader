@@ -1,12 +1,22 @@
 import { Base } from './Base';
-import { useContentUIState } from '../hooks/useContentUIState';
+import { useStorage } from '@extension/shared';
+import { engineStatusStorage } from '@extension/storage';
 import { FaServer } from 'react-icons/fa';
 import type { FC } from 'react';
 
 export const RunningStatus: FC<{
   style?: React.CSSProperties;
 }> = ({ style }) => {
-  const { running } = useContentUIState();
+  const engineStatus = useStorage(engineStatusStorage);
+  const isReady = engineStatus.connected && engineStatus.models.length > 0;
+  const value = isReady ? '已连接' : engineStatus.connected ? '未加载模型' : '未连接';
 
-  return <Base icon={<FaServer />} title="服务器状态" value={running ? '运行中' : '已停止'} style={style} />;
+  return (
+    <Base
+      icon={<FaServer style={{ color: isReady ? '#22c55e' : engineStatus.connected ? '#f59e0b' : undefined }} />}
+      title="服务器状态"
+      value={value}
+      style={style}
+    />
+  );
 };

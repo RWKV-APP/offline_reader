@@ -135,7 +135,6 @@ export const parseNode = (_node: Node): boolean => {
   if (state.inspecting) node.classList.add(rwkvClass.inspect);
 
   const breakLineHappened = checkBreakLineHappened(node);
-  const nodeNameToBeAdded = breakLineHappened ? 'div' : 'span';
 
   const loadingSpinner = document.createElement('span');
   if (node.querySelector(`.${rwkvClass.spinner}`) === null) {
@@ -144,8 +143,9 @@ export const parseNode = (_node: Node): boolean => {
     node.appendChild(loadingSpinner);
   }
 
-  const nodeToBeAdded = document.createElement(nodeNameToBeAdded);
+  const nodeToBeAdded = document.createElement('span');
   nodeToBeAdded.classList.add(rwkvClass.result);
+  nodeToBeAdded.dataset.rwkvLayout = breakLineHappened ? 'block' : 'inline';
   if (state.inspecting) nodeToBeAdded.classList.add(rwkvClass.inspect);
   const priority = getPriority(node);
   tick++;

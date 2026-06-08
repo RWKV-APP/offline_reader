@@ -1,6 +1,12 @@
 import initClient from '../initializers/init-client.js';
 
 (() => {
+  console.info('[HMR] Page refresh client injected', {
+    // @ts-expect-error That's because of the dynamic code loading
+    id: __HMR_ID,
+    href: window.location.href,
+  });
+
   let pendingReload = false;
 
   initClient({
