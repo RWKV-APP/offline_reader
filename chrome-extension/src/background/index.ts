@@ -1,5 +1,10 @@
 import 'webextension-polyfill';
 import { LocalInferenceClient } from './local-inference-client';
+import {
+  createTranslationCacheKey,
+  getTranslationCacheModelFingerprint,
+  TranslationCacheStore,
+} from './translation-cache';
 import { ignoreHref } from '@extension/shared';
 import {
   BUILTIN_EXTENSION_ENGINE_API_BASE_URLS,
@@ -22,13 +27,27 @@ import type {
 import type { EngineStatus, ExtensionEngineConfig } from '@extension/storage';
 
 const localInferenceClient = new LocalInferenceClient();
-const translationCache = new Map<string, string>();
+const translationCacheStore = new TranslationCacheStore();
+const inFlightTranslations = new Map<string, Promise<string>>();
 const pendingRequests = new Map<string, (response?: AllMessage) => void>();
 const enginePollIntervalMs = 1000;
+const maxConcurrentTranslationRequests = 2;
+const engineStatusTransientFailureThreshold = 3;
 const builtinEngineApiBaseUrls: readonly string[] = BUILTIN_EXTENSION_ENGINE_API_BASE_URLS;
 let refreshPromise: Promise<EngineStatus> | null = null;
-let engineFingerprint = '';
 let lastEngineFailureSummary: EngineFailureSummary | null = null;
+let activeTranslationRequestCount = 0;
+let consecutiveEngineStatusUnreadyCount = 0;
+let lastReadyEngineStatus: EngineStatus | null = null;
+
+interface QueuedTranslationTask {
+  request: QueryRequest['body'];
+  run: () => Promise<string>;
+  resolve: (translation: string) => void;
+  reject: (error: unknown) => void;
+}
+
+const queuedTranslationTasks: QueuedTranslationTask[] = [];
 
 // 初始化状态，从 storage 中恢复
 const state: State = {
@@ -42,6 +61,49 @@ const state: State = {
 };
 
 const canRunTranslations = (engineStatus: EngineStatus) => engineStatus.connected && engineStatus.models.length > 0;
+
+const compareQueuedTranslationTasks = (a: QueuedTranslationTask, b: QueuedTranslationTask) => {
+  if (a.request.priority !== b.request.priority) {
+    return b.request.priority - a.request.priority;
+  }
+
+  return a.request.tick - b.request.tick;
+};
+
+const drainTranslationQueue = () => {
+  while (activeTranslationRequestCount < maxConcurrentTranslationRequests && queuedTranslationTasks.length > 0) {
+    const task = queuedTranslationTasks.shift();
+    if (!task) {
+      return;
+    }
+
+    activeTranslationRequestCount++;
+    void task
+      .run()
+      .then(translation => {
+        task.resolve(translation);
+      })
+      .catch(error => {
+        task.reject(error);
+      })
+      .finally(() => {
+        activeTranslationRequestCount--;
+        drainTranslationQueue();
+      });
+  }
+};
+
+const enqueueTranslation = (request: QueryRequest['body'], run: () => Promise<string>) =>
+  new Promise<string>((resolve, reject) => {
+    queuedTranslationTasks.push({
+      request,
+      run,
+      resolve,
+      reject,
+    });
+    queuedTranslationTasks.sort(compareQueuedTranslationTasks);
+    drainTranslationQueue();
+  });
 
 const shouldTryBuiltinFallbacks = (apiBaseUrl: string) =>
   builtinEngineApiBaseUrls.includes(normalizeApiBaseUrl(apiBaseUrl));
@@ -100,6 +162,49 @@ const recordEngineFailure = (stage: EngineFailureStage, apiBaseUrl: string, erro
     error: getErrorMessage(error),
     checkedAt: new Date().toISOString(),
   };
+};
+
+const getEngineStatusIssue = (engineStatus: EngineStatus) => {
+  if (engineStatus.lastError) {
+    return engineStatus.lastError;
+  }
+
+  if (!engineStatus.connected) {
+    return 'API 未运行';
+  }
+
+  if (engineStatus.models.length === 0) {
+    return 'API 在线，未加载模型';
+  }
+
+  return '状态未知';
+};
+
+const rememberReadyEngineStatus = (engineStatus: EngineStatus) => {
+  consecutiveEngineStatusUnreadyCount = 0;
+  lastReadyEngineStatus = {
+    ...engineStatus,
+    lastError: null,
+  };
+
+  return lastReadyEngineStatus;
+};
+
+const getStabilizedEngineStatus = (engineStatus: EngineStatus) => {
+  if (canRunTranslations(engineStatus)) {
+    return rememberReadyEngineStatus(engineStatus);
+  }
+
+  consecutiveEngineStatusUnreadyCount++;
+
+  if (lastReadyEngineStatus && consecutiveEngineStatusUnreadyCount < engineStatusTransientFailureThreshold) {
+    return {
+      ...lastReadyEngineStatus,
+      lastError: `状态探测暂时异常（${consecutiveEngineStatusUnreadyCount}/${engineStatusTransientFailureThreshold}）：${getEngineStatusIssue(engineStatus)}`,
+    };
+  }
+
+  return engineStatus;
 };
 
 const resolveEngineConnection = async (engineConfig: ExtensionEngineConfig) => {
@@ -190,6 +295,9 @@ const initializeStateFromStorage = async () => {
     state.showBBox = storedState.showBBox;
     state.ignored = storedState.ignored;
     state.running = canRunTranslations(engineStatus);
+    if (state.running) {
+      rememberReadyEngineStatus(engineStatus);
+    }
   } catch (e) {
     console.error(e);
   }
@@ -227,17 +335,14 @@ const refreshEngineStatus = async () => {
   refreshPromise = (async () => {
     const engineConfig = await engineConfigStorage.get();
     const resolvedConnection = await resolveEngineConnection(engineConfig);
-    const engineStatus = resolvedConnection.engineStatus;
-    const nextFingerprint = JSON.stringify({
-      apiBaseUrl: resolvedConnection.engineConfig.apiBaseUrl,
-      models: engineStatus.models,
-    });
+    const rawEngineStatus = resolvedConnection.engineStatus;
+    const shouldRecordStatusIssue = rawEngineStatus.lastError != null || !rawEngineStatus.connected;
 
-    if (nextFingerprint !== engineFingerprint) {
-      translationCache.clear();
-      engineFingerprint = nextFingerprint;
+    if (shouldRecordStatusIssue) {
+      recordEngineFailure('status', resolvedConnection.engineConfig.apiBaseUrl, getEngineStatusIssue(rawEngineStatus));
     }
 
+    const engineStatus = getStabilizedEngineStatus(rawEngineStatus);
     await applyEngineStatus(engineStatus);
 
     return engineStatus;
@@ -282,28 +387,58 @@ const rejectPendingRequest = (request: QueryRequest['body'], error: unknown) => 
 };
 
 const handleQueryRequest = async (request: QueryRequest['body']) => {
-  const cachedTranslation = translationCache.get(request.source);
-
-  if (cachedTranslation !== undefined) {
-    resolvePendingRequest(request.requestId, {
-      func: 'QueryResponse',
-      body: {
-        requestId: request.requestId,
-        source: request.source,
-        translation: cachedTranslation,
-        url: request.url,
-      },
-    });
-    return;
-  }
-
   let engineConfig: ExtensionEngineConfig | null = null;
 
   try {
     engineConfig = await engineConfigStorage.get();
-    const translation = await translateWithResolvedConfig(engineConfig, request);
+    const engineStatus = await engineStatusStorage.get();
+    const modelFingerprint = getTranslationCacheModelFingerprint(engineConfig, engineStatus);
+    const cacheKey = await createTranslationCacheKey({
+      source: request.source,
+      modelFingerprint,
+    });
+    const cachedTranslation = await translationCacheStore.get(cacheKey);
 
-    translationCache.set(request.source, translation);
+    if (cachedTranslation !== null) {
+      resolvePendingRequest(request.requestId, {
+        func: 'QueryResponse',
+        body: {
+          requestId: request.requestId,
+          source: request.source,
+          translation: cachedTranslation.translation,
+          url: request.url,
+        },
+      });
+      return;
+    }
+
+    let translationPromise = inFlightTranslations.get(cacheKey);
+
+    if (!translationPromise) {
+      const resolvedEngineConfig = engineConfig;
+      translationPromise = enqueueTranslation(request, () =>
+        translateWithResolvedConfig(resolvedEngineConfig, request),
+      ).then(async translation => {
+        if (translation !== '') {
+          await translationCacheStore.set({
+            key: cacheKey,
+            source: request.source,
+            translation,
+            modelFingerprint,
+          });
+        }
+
+        return translation;
+      });
+      inFlightTranslations.set(cacheKey, translationPromise);
+      translationPromise.then(
+        () => inFlightTranslations.delete(cacheKey),
+        () => inFlightTranslations.delete(cacheKey),
+      );
+    }
+
+    const translation = await translationPromise;
+
     void refreshEngineStatus();
 
     resolvePendingRequest(request.requestId, {
@@ -319,6 +454,27 @@ const handleQueryRequest = async (request: QueryRequest['body']) => {
     recordEngineFailure('translation', engineConfig?.apiBaseUrl ?? '', error);
     rejectPendingRequest(request, error);
   }
+};
+
+const getTranslationCacheStatsAndRespond = (sendResponse: (response?: AllMessage) => void) => {
+  void translationCacheStore.getStats().then(stats => {
+    sendResponse({
+      func: 'GetTranslationCacheStatsResponse',
+      body: stats,
+    });
+  });
+};
+
+const clearTranslationCacheAndRespond = (
+  scope: 'memory' | 'disk' | 'all',
+  sendResponse: (response?: AllMessage) => void,
+) => {
+  void translationCacheStore.clear(scope).then(async () => {
+    sendResponse({
+      func: 'ClearTranslationCacheResponse',
+      body: await translationCacheStore.getStats(),
+    });
+  });
 };
 
 const refreshAndRespond = (sendResponse: (response?: RefreshEngineStatusResponse) => void) => {
@@ -464,6 +620,14 @@ const listenMessageForUI = (
         runEngineProbeAndRespond(sendResponse as (response?: RunEngineProbeResponse) => void);
         return true;
       }
+      case 'GetTranslationCacheStats': {
+        getTranslationCacheStatsAndRespond(sendResponse as (response?: AllMessage) => void);
+        return true;
+      }
+      case 'ClearTranslationCache': {
+        clearTranslationCacheAndRespond(message.scope, sendResponse as (response?: AllMessage) => void);
+        return true;
+      }
       case 'PositionSync': {
         const { positions, tabId } = message.body;
         const actualTabId = sender.tab?.id || tabId;
@@ -486,6 +650,8 @@ const listenMessageForUI = (
       case 'GetStateResponse':
       case 'RefreshEngineStatusResponse':
       case 'RunEngineProbeResponse':
+      case 'GetTranslationCacheStatsResponse':
+      case 'ClearTranslationCacheResponse':
       case 'PositionSyncResponse': {
         return false;
       }

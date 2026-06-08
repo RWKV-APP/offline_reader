@@ -1,3 +1,4 @@
+import { TRANSLATION_CACHE_POLICY_VERSION } from './translation-cache';
 import { getPortFromApiBaseUrl, normalizeApiBaseUrl } from '@extension/storage';
 import type { EngineStatus, ExtensionEngineConfig } from '@extension/storage';
 
@@ -25,6 +26,7 @@ interface ChatCompletionInput {
   source: string;
   maxTokens: number;
   temperature: number;
+  markAsWebTranslation?: boolean;
 }
 
 const engineProbeSampleText = 'Translate this sentence into Chinese: The local inference server is ready.';
@@ -67,21 +69,25 @@ const sanitizeTranslation = (value: string) =>
     .replace(/^["“”'`]+|["“”'`]+$/g, '')
     .trim();
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number) => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new Error(`请求超时 (${timeoutMs}ms)`));
-    }, timeoutMs);
-  });
+const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit | undefined, timeoutMs: number) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
 
   try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`请求超时 (${timeoutMs}ms)`);
     }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 };
 
@@ -91,8 +97,9 @@ export class LocalInferenceClient {
   }
 
   private async requestChatCompletion(config: ExtensionEngineConfig, input: ChatCompletionInput) {
-    const response = await withTimeout(
-      fetch(this.buildUrl(config, '/v1/chat/completions'), {
+    const response = await fetchWithTimeout(
+      this.buildUrl(config, '/v1/chat/completions'),
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,6 +109,16 @@ export class LocalInferenceClient {
           stream: false,
           max_tokens: input.maxTokens,
           temperature: input.temperature,
+          ...(input.markAsWebTranslation
+            ? {
+                metadata: {
+                  rwkvOfflineReader: {
+                    kind: 'web_translation',
+                    cachePolicyVersion: TRANSLATION_CACHE_POLICY_VERSION,
+                  },
+                },
+              }
+            : {}),
           messages: [
             {
               role: 'user',
@@ -109,7 +126,7 @@ export class LocalInferenceClient {
             },
           ],
         }),
-      }),
+      },
       config.requestTimeoutMs,
     );
 
@@ -123,9 +140,10 @@ export class LocalInferenceClient {
 
   async getEngineStatus(config: ExtensionEngineConfig): Promise<EngineStatus> {
     const normalizedBaseUrl = normalizeApiBaseUrl(config.apiBaseUrl);
+    const statusTimeoutMs = Math.min(config.requestTimeoutMs, 5000);
 
     try {
-      const response = await withTimeout(fetch(this.buildUrl(config, '/v1/server/status')), config.requestTimeoutMs);
+      const response = await fetchWithTimeout(this.buildUrl(config, '/v1/server/status'), undefined, statusTimeoutMs);
 
       if (!response.ok) {
         throw new Error(await extractErrorMessage(response));
@@ -158,6 +176,7 @@ export class LocalInferenceClient {
       source: input.source,
       maxTokens,
       temperature: 0.2,
+      markAsWebTranslation: true,
     });
 
     if (translation === '') {

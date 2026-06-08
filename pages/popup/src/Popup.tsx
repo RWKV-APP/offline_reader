@@ -4,12 +4,18 @@ import { contentUIStateStorage, engineConfigStorage, engineStatusStorage } from 
 import { cn, ErrorDisplay, LoadingSpinner } from '@extension/ui';
 import { useEffect, useState } from 'react';
 import type {
+  ClearTranslationCache,
+  ClearTranslationCacheResponse,
   EngineFailureSummary,
   EngineProbeResult,
+  GetTranslationCacheStats,
+  GetTranslationCacheStatsResponse,
   RefreshEngineStatus,
   RefreshEngineStatusResponse,
   RunEngineProbe,
   RunEngineProbeResponse,
+  TranslationCacheClearScope,
+  TranslationCacheStats,
 } from '@extension/shared';
 
 const cardClassName = 'rounded-2xl border border-stone-200/80 bg-white/80 p-4 shadow-sm backdrop-blur';
@@ -82,6 +88,23 @@ const getFailureStageLabel = (stage: EngineFailureSummary['stage']) => {
   }
 };
 
+const formatBytes = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) {
+    return '0 B';
+  }
+
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = value;
+  let unitIndex = 0;
+
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size = size / 1024;
+    unitIndex++;
+  }
+
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+};
+
 const getProbeSummary = (probeResult: EngineProbeResult | null) => {
   if (!probeResult) {
     return '未执行';
@@ -144,11 +167,35 @@ const Popup = () => {
   const [lastRefreshAt, setLastRefreshAt] = useState<string | null>(null);
   const [probeResult, setProbeResult] = useState<EngineProbeResult | null>(null);
   const [recentFailure, setRecentFailure] = useState<EngineFailureSummary | null>(null);
+  const [cacheStats, setCacheStats] = useState<TranslationCacheStats | null>(null);
+  const [clearingCacheScope, setClearingCacheScope] = useState<TranslationCacheClearScope | null>(null);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const hasModels = engineStatus.models.length > 0;
   const statusLabel = getConnectionLabel(engineStatus.connected, hasModels);
   const statusTone = getConnectionTone(engineStatus.connected, hasModels);
+
+  const refreshCacheStats = async () => {
+    const response = await chrome.runtime.sendMessage<GetTranslationCacheStats, GetTranslationCacheStatsResponse>({
+      func: 'GetTranslationCacheStats',
+    });
+    setCacheStats(response.body);
+    return response.body;
+  };
+
+  const clearTranslationCache = async (scope: TranslationCacheClearScope) => {
+    setClearingCacheScope(scope);
+
+    try {
+      const response = await chrome.runtime.sendMessage<ClearTranslationCache, ClearTranslationCacheResponse>({
+        func: 'ClearTranslationCache',
+        scope,
+      });
+      setCacheStats(response.body);
+    } finally {
+      setClearingCacheScope(null);
+    }
+  };
 
   useEffect(() => {
     setApiBaseUrlDraft(engineConfig.apiBaseUrl);
@@ -167,6 +214,7 @@ const Popup = () => {
       });
       setRecentFailure(response.recentFailure);
       setLastRefreshAt(new Date().toISOString());
+      await refreshCacheStats();
       await chrome.runtime.sendMessage({ func: 'GetState' });
     } finally {
       setIsRefreshing(false);
@@ -185,6 +233,7 @@ const Popup = () => {
       setProbeResult(response.body);
       setRecentFailure(response.body.recentFailure);
       setLastRefreshAt(response.body.checkedAt);
+      await refreshCacheStats();
       await chrome.runtime.sendMessage({ func: 'GetState' });
     } catch (error) {
       const checkedAt = new Date().toISOString();
@@ -207,6 +256,7 @@ const Popup = () => {
   };
 
   const handleCopyDiagnostics = async () => {
+    const latestCacheStats = cacheStats ?? (await refreshCacheStats());
     const diagnosticInfo = {
       extensionVersion: chrome.runtime.getManifest().version,
       generatedAt: new Date().toISOString(),
@@ -231,6 +281,7 @@ const Popup = () => {
       lastRefreshAt,
       probe: probeResult,
       recentFailure,
+      translationCache: latestCacheStats,
     };
 
     try {
@@ -252,6 +303,7 @@ const Popup = () => {
         });
         setRecentFailure(response.recentFailure);
         setLastRefreshAt(new Date().toISOString());
+        await refreshCacheStats();
         await chrome.runtime.sendMessage({ func: 'GetState' });
       } finally {
         setIsRefreshing(false);
@@ -299,6 +351,70 @@ const Popup = () => {
           className="h-14 w-14 rounded-2xl shadow-sm"
           alt="RWKV Offline Reader"
         />
+      </div>
+
+      <div className={cn(cardClassName, 'mb-4')}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-semibold">翻译缓存</div>
+            <div className="text-xs text-stone-500">
+              本机保存网页翻译结果，默认 {cacheStats?.ttlDays ?? 30} 天过期。
+            </div>
+          </div>
+          <button
+            className={cn(actionButtonClassName, 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50')}
+            onClick={() => void refreshCacheStats()}>
+            刷新
+          </button>
+        </div>
+
+        <div className="space-y-1">
+          <StatusRow
+            label="内存"
+            value={cacheStats ? `${cacheStats.memoryEntries} 条 / ${formatBytes(cacheStats.memoryBytes)}` : '读取中'}
+          />
+          <StatusRow
+            label="硬盘"
+            value={cacheStats ? `${cacheStats.diskEntries} 条 / ${formatBytes(cacheStats.diskBytes)}` : '读取中'}
+          />
+          <StatusRow
+            label="上限"
+            value={cacheStats ? `${cacheStats.maxEntries} 条 / ${formatBytes(cacheStats.maxBytes)}` : '—'}
+          />
+          <StatusRow
+            label="本轮命中"
+            value={
+              cacheStats
+                ? `内存 ${cacheStats.sessionMemoryHits} / 硬盘 ${cacheStats.sessionDiskHits} / 未命中 ${cacheStats.sessionMisses}`
+                : '—'
+            }
+          />
+          <StatusRow
+            label="最近命中"
+            value={cacheStats?.lastHitLevel === 'memory' ? '内存' : cacheStats?.lastHitLevel === 'disk' ? '硬盘' : '无'}
+          />
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <button
+            className={cn(actionButtonClassName, 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50')}
+            onClick={() => void clearTranslationCache('memory')}
+            disabled={clearingCacheScope !== null}>
+            {clearingCacheScope === 'memory' ? '清理中...' : '清内存'}
+          </button>
+          <button
+            className={cn(actionButtonClassName, 'border-stone-300 bg-white text-stone-700 hover:bg-stone-50')}
+            onClick={() => void clearTranslationCache('disk')}
+            disabled={clearingCacheScope !== null}>
+            {clearingCacheScope === 'disk' ? '清理中...' : '清硬盘'}
+          </button>
+          <button
+            className={cn(actionButtonClassName, 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100')}
+            onClick={() => void clearTranslationCache('all')}
+            disabled={clearingCacheScope !== null}>
+            {clearingCacheScope === 'all' ? '清理中...' : '清全部'}
+          </button>
+        </div>
       </div>
 
       <div className={cn(cardClassName, 'mb-4')}>

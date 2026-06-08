@@ -101,6 +101,42 @@ export interface RunEngineProbeResponse {
   body: EngineProbeResult;
 }
 
+export type TranslationCacheClearScope = 'memory' | 'disk' | 'all';
+
+export interface TranslationCacheStats {
+  ttlDays: number;
+  maxEntries: number;
+  maxBytes: number;
+  memoryEntries: number;
+  memoryBytes: number;
+  diskEntries: number;
+  diskBytes: number;
+  sessionMemoryHits: number;
+  sessionDiskHits: number;
+  sessionMisses: number;
+  lastHitLevel: 'memory' | 'disk' | null;
+  lastUpdatedAt: string | null;
+}
+
+export interface GetTranslationCacheStats {
+  func: 'GetTranslationCacheStats';
+}
+
+export interface GetTranslationCacheStatsResponse {
+  func: 'GetTranslationCacheStatsResponse';
+  body: TranslationCacheStats;
+}
+
+export interface ClearTranslationCache {
+  func: 'ClearTranslationCache';
+  scope: TranslationCacheClearScope;
+}
+
+export interface ClearTranslationCacheResponse {
+  func: 'ClearTranslationCacheResponse';
+  body: TranslationCacheStats;
+}
+
 export type AllMessage =
   | QueryRequest
   | QueryResponse
@@ -112,6 +148,10 @@ export type AllMessage =
   | RefreshEngineStatusResponse
   | RunEngineProbe
   | RunEngineProbeResponse
+  | GetTranslationCacheStats
+  | GetTranslationCacheStatsResponse
+  | ClearTranslationCache
+  | ClearTranslationCacheResponse
   | PositionSync
   | PositionSyncResponse;
 
