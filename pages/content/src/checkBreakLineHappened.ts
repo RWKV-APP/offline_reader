@@ -14,6 +14,10 @@ export const checkBreakLineHappened = (node: HTMLElement) => {
   const textContent = node.textContent?.trim();
   if (!textContent) return false;
 
+  if (computedStyle.display === 'inline') {
+    return false;
+  }
+
   const isClippedOverflow = (value: string) => value === 'hidden' || value === 'clip';
   const hasSingleLineConstraint =
     computedStyle.whiteSpace === 'nowrap' ||

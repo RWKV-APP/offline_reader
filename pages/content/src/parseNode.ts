@@ -15,6 +15,7 @@ const checkingTypes = checkingTypeLower.concat(checkingTypeUpper);
 const pendingPrioritySyncDelayMs = 150;
 let tick = 0;
 let pendingPrioritySyncTimer: number | null = null;
+const ignoredContentSelectors = ['.mw-editsection'];
 
 export const forceBreakLineTags = ['ul', 'ol', 'li'];
 export const forceBreakLineTagsUpper = forceBreakLineTags.map(item => item.toUpperCase());
@@ -80,6 +81,8 @@ export const parseNode = (_node: Node): boolean => {
   if (!parentNode) return false;
 
   const parentNodeName = parentNode.nodeName;
+
+  if (ignoredContentSelectors.some(selector => node.closest(selector))) return false;
 
   for (const ignoreType of ignoreTypes) {
     const closest = parentNode?.closest(ignoreType);

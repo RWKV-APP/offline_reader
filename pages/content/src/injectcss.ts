@@ -57,11 +57,15 @@ export const injectCss = () => {
 
 .rwkvOfflineTranslationResult[data-rwkv-layout='block'] {
   display: block;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
   margin-top: 2px;
 }
 
 .rwkvOfflineTranslationResult[data-rwkv-layout='inline'] {
   display: inline;
+  white-space: inherit !important;
 }
 
 /* 浅色主题下的 hover 效果 */
